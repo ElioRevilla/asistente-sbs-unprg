@@ -94,6 +94,7 @@ jobs:
             --region="${REGION}" \
             --platform=managed \
             --image="${FRONTEND_IMAGE}" \
+            --service-account="${RUN_SERVICE_ACCOUNT}" \
             --allow-unauthenticated \
             --memory=512Mi \
             --cpu=1 \
