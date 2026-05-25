@@ -104,8 +104,12 @@ jobs:
       - name: Read frontend URL
         run: |
           FRONTEND_URL="$(gcloud run services describe "${FRONTEND_SERVICE}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
+          PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
+          FRONTEND_PROJECT_URL="https://${FRONTEND_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
           echo "FRONTEND_URL=${FRONTEND_URL}" >> "${GITHUB_ENV}"
+          echo "FRONTEND_PROJECT_URL=${FRONTEND_PROJECT_URL}" >> "${GITHUB_ENV}"
           echo "Frontend: ${FRONTEND_URL}"
+          echo "Frontend project URL: ${FRONTEND_PROJECT_URL}"
           echo "Backend: ${BACKEND_URL}"
 
       - name: Allow frontend origin in backend CORS
@@ -113,4 +117,4 @@ jobs:
           gcloud run services update "${BACKEND_SERVICE}" \
             --project="${PROJECT_ID}" \
             --region="${REGION}" \
-            --update-env-vars="CORS_ORIGINS=${FRONTEND_URL}"
+            --update-env-vars="CORS_ORIGINS=${FRONTEND_PROJECT_URL}"
