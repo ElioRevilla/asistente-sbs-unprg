@@ -1,0 +1,115 @@
+name: Deploy Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  ARTIFACT_REPOSITORY: ${{ vars.ARTIFACT_REPOSITORY }}
+  BACKEND_SERVICE: ${{ vars.CLOUD_RUN_BACKEND_SERVICE }}
+  FRONTEND_SERVICE: ${{ vars.CLOUD_RUN_FRONTEND_SERVICE }}
+  RUN_SERVICE_ACCOUNT: ${{ vars.CLOUD_RUN_SERVICE_ACCOUNT }}
+  CLOUDSQL_INSTANCE: ${{ vars.CLOUDSQL_INSTANCE }}
+  DB_NAME: ${{ vars.DB_NAME }}
+  DB_USER: ${{ vars.DB_USER }}
+  GCS_BUCKET_DOCS: ${{ vars.GCS_BUCKET_DOCS }}
+  FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+  VERTEX_AI_LOCATION: ${{ vars.VERTEX_AI_LOCATION }}
+  GEMINI_FLASH_MODEL: ${{ vars.GEMINI_FLASH_MODEL }}
+  GEMINI_PRO_MODEL: ${{ vars.GEMINI_PRO_MODEL }}
+  EMBEDDINGS_MODEL: ${{ vars.EMBEDDINGS_MODEL }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push backend image
+        run: |
+          BACKEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPOSITORY}/sbs-assistant-api:${GITHUB_SHA}"
+          docker build -t "${BACKEND_IMAGE}" .
+          docker push "${BACKEND_IMAGE}"
+          echo "BACKEND_IMAGE=${BACKEND_IMAGE}" >> "${GITHUB_ENV}"
+
+      - name: Deploy backend
+        run: |
+          gcloud run deploy "${BACKEND_SERVICE}" \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --platform=managed \
+            --image="${BACKEND_IMAGE}" \
+            --service-account="${RUN_SERVICE_ACCOUNT}" \
+            --allow-unauthenticated \
+            --memory=1Gi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=3 \
+            --set-env-vars="APP_ENV=production,LOG_LEVEL=INFO,SERVICE_NAME=sbs-assistant,GCP_PROJECT_ID=${PROJECT_ID},GCP_REGION=${REGION},VERTEX_AI_LOCATION=${VERTEX_AI_LOCATION},CLOUDSQL_INSTANCE=${CLOUDSQL_INSTANCE},DB_NAME=${DB_NAME},DB_USER=${DB_USER},GCS_BUCKET_DOCS=${GCS_BUCKET_DOCS},FIREBASE_AUTH_REQUIRED=true,FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID},GEMINI_FLASH_MODEL=${GEMINI_FLASH_MODEL},GEMINI_PRO_MODEL=${GEMINI_PRO_MODEL},EMBEDDINGS_MODEL=${EMBEDDINGS_MODEL}" \
+            --set-secrets="DB_PASSWORD=DB_PASSWORD:latest"
+
+      - name: Read backend URL
+        run: |
+          BACKEND_URL="$(gcloud run services describe "${BACKEND_SERVICE}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
+          echo "BACKEND_URL=${BACKEND_URL}" >> "${GITHUB_ENV}"
+
+      - name: Build and push frontend image
+        run: |
+          FRONTEND_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${ARTIFACT_REPOSITORY}/sbs-assistant-web:${GITHUB_SHA}"
+          docker build \
+            --build-arg VITE_API_BASE_URL="${BACKEND_URL}" \
+            --build-arg VITE_FIREBASE_API_KEY="${{ secrets.VITE_FIREBASE_API_KEY }}" \
+            --build-arg VITE_FIREBASE_AUTH_DOMAIN="${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}" \
+            --build-arg VITE_FIREBASE_PROJECT_ID="${{ vars.VITE_FIREBASE_PROJECT_ID }}" \
+            --build-arg VITE_FIREBASE_APP_ID="${{ vars.VITE_FIREBASE_APP_ID }}" \
+            -t "${FRONTEND_IMAGE}" \
+            ./frontend
+          docker push "${FRONTEND_IMAGE}"
+          echo "FRONTEND_IMAGE=${FRONTEND_IMAGE}" >> "${GITHUB_ENV}"
+
+      - name: Deploy frontend
+        run: |
+          gcloud run deploy "${FRONTEND_SERVICE}" \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --platform=managed \
+            --image="${FRONTEND_IMAGE}" \
+            --allow-unauthenticated \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=2
+
+      - name: Read frontend URL
+        run: |
+          FRONTEND_URL="$(gcloud run services describe "${FRONTEND_SERVICE}" --project="${PROJECT_ID}" --region="${REGION}" --format='value(status.url)')"
+          echo "FRONTEND_URL=${FRONTEND_URL}" >> "${GITHUB_ENV}"
+          echo "Frontend: ${FRONTEND_URL}"
+          echo "Backend: ${BACKEND_URL}"
+
+      - name: Allow frontend origin in backend CORS
+        run: |
+          gcloud run services update "${BACKEND_SERVICE}" \
+            --project="${PROJECT_ID}" \
+            --region="${REGION}" \
+            --update-env-vars="CORS_ORIGINS=${FRONTEND_URL}"

@@ -1,0 +1,6 @@
+codigo,descripcion,factor_conversion,articulo_fuente
+a,"Confirmaciones de cartas de credito irrevocables de hasta un ano cuando el banco emisor sea una empresa del sistema financiero del exterior de primer nivel",20.00,"Capitulo I, numeral 3 - Factores de Conversion Crediticios"
+b,"Emisiones de cartas fianzas que respalden obligaciones de hacer y no hacer",50.00,"Capitulo I, numeral 3 - Factores de Conversion Crediticios"
+c,"Emisiones de avales, cartas de credito de importacion, cartas fianzas no incluidas en b, confirmaciones de cartas de credito no incluidas en a, y aceptaciones bancarias",100.00,"Capitulo I, numeral 3 - Factores de Conversion Crediticios"
+d,"Creditos concedidos no desembolsados y lineas de credito no utilizadas",0.00,"Capitulo I, numeral 3 - Factores de Conversion Crediticios"
+e,"Otros creditos indirectos no contemplados en los literales anteriores",100.00,"Capitulo I, numeral 3 - Factores de Conversion Crediticios"
