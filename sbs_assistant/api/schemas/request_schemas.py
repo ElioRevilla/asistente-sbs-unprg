@@ -29,3 +29,13 @@ class ValidateExampleAnswerRequestSchema(BaseModel):
     case_id: str = Field(min_length=1)
     selected_category: str = Field(min_length=1, max_length=80)
     student_id: str | None = None
+
+
+class ChatConversationUpsertRequest(BaseModel):
+    """Request for creating or updating a persisted chat conversation."""
+
+    model_config = ConfigDict(frozen=True)
+
+    title: str = Field(min_length=1, max_length=160)
+    mode: str = Field(pattern="^(explicame|ejemplifica)$")
+    messages: list[dict[str, object]] = Field(default_factory=list, max_length=200)

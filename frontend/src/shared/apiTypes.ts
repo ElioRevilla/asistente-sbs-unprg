@@ -32,3 +32,16 @@ export type ExampleFeedbackResponse = {
     source_article: string;
   };
 };
+
+export type ChatConversationDto = {
+  id: string;
+  title: string;
+  mode: "explicame" | "ejemplifica";
+  messages: Record<string, unknown>[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type ChatConversationListResponse = {
+  conversations: ChatConversationDto[];
+};

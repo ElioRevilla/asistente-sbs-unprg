@@ -1,6 +1,8 @@
 import axios from "axios";
 
 import type {
+  ChatConversationDto,
+  ChatConversationListResponse,
   ExampleFeedbackResponse,
   ExampleResponse,
   ExplainResponse
@@ -57,4 +59,29 @@ export async function answerExample(
     }
   );
   return response.data;
+}
+
+export async function listConversations(): Promise<ChatConversationDto[]> {
+  const response = await apiClient.get<ChatConversationListResponse>(
+    "/chat/conversations"
+  );
+  return response.data.conversations;
+}
+
+export async function saveConversation(
+  conversation: Pick<ChatConversationDto, "id" | "title" | "mode" | "messages">
+): Promise<ChatConversationDto> {
+  const response = await apiClient.put<ChatConversationDto>(
+    `/chat/conversations/${conversation.id}`,
+    {
+      title: conversation.title,
+      mode: conversation.mode,
+      messages: conversation.messages
+    }
+  );
+  return response.data;
+}
+
+export async function deleteConversation(conversationId: string): Promise<void> {
+  await apiClient.delete(`/chat/conversations/${conversationId}`);
 }

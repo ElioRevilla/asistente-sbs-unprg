@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from sbs_assistant.api.routes.chat_history import router as chat_history_router
 from sbs_assistant.api.routes.example import router as example_router
 from sbs_assistant.api.routes.explain import router as explain_router
 from sbs_assistant.api.routes.health import router as health_router
@@ -22,6 +23,7 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(health_router)
+    app.include_router(chat_history_router)
     app.include_router(explain_router)
     app.include_router(example_router)
     return app

@@ -26,7 +26,7 @@ export function Dashboard() {
         </div>
       </header>
 
-      <AssistantChat />
+      <AssistantChat userKey={user?.uid ?? user?.email ?? "local-user"} />
     </main>
   );
 }

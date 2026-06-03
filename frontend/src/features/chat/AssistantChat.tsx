@@ -1,13 +1,29 @@
-import { FormEvent, useState } from "react";
-import { Bot, CheckCircle2, Send, Sparkles, UserRound } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  Bot,
+  CheckCircle2,
+  MessageSquareText,
+  Plus,
+  Send,
+  Sparkles,
+  Trash2,
+  UserRound
+} from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 
 import {
   answerExample,
+  deleteConversation as deletePersistedConversation,
   explainQuestion,
-  generateExample
+  generateExample,
+  listConversations,
+  saveConversation
 } from "../../services/apiClient";
-import type { Citation, ExampleResponse } from "../../shared/apiTypes";
+import type {
+  ChatConversationDto,
+  Citation,
+  ExampleResponse
+} from "../../shared/apiTypes";
 import { renderAssistantMarkdown } from "../../shared/markdown";
 
 type ChatMode = "explicame" | "ejemplifica";
@@ -42,25 +58,135 @@ type AssistantExampleMessage = BaseMessage & {
 
 type ChatMessage = UserMessage | AssistantTextMessage | AssistantExampleMessage;
 
-const starterPrompts = {
+type Conversation = {
+  id: string;
+  title: string;
+  mode: ChatMode;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+const starterPrompts: Record<ChatMode, string> = {
   explicame: "¿En qué casos un deudor se clasifica en categoría Dudoso?",
   ejemplifica: "Genera un caso de un deudor de microempresa en categoría Deficiente."
 };
 
-export function AssistantChat() {
+function createWelcomeMessage(): AssistantTextMessage {
+  return {
+    id: crypto.randomUUID(),
+    role: "assistant",
+    kind: "text",
+    text: "Hola. Puedo explicarte el reglamento o generarte casos para practicar clasificación crediticia.",
+    citations: []
+  };
+}
+
+function createConversation(mode: ChatMode = "explicame"): Conversation {
+  const now = new Date().toISOString();
+  return {
+    id: crypto.randomUUID(),
+    title: "Nueva conversación",
+    mode,
+    messages: [createWelcomeMessage()],
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function getConversationTitle(messages: ChatMessage[]): string {
+  const firstQuestion = messages.find((item) => item.role === "user");
+  if (!firstQuestion || firstQuestion.role !== "user") {
+    return "Nueva conversación";
+  }
+  return firstQuestion.text.length > 58
+    ? `${firstQuestion.text.slice(0, 58)}...`
+    : firstQuestion.text;
+}
+
+function formatHistoryTime(value: string): string {
+  return new Intl.DateTimeFormat("es-PE", {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "short"
+  }).format(new Date(value));
+}
+
+export function AssistantChat({ userKey }: { userKey: string }) {
   const [mode, setMode] = useState<ChatMode>("explicame");
   const [message, setMessage] = useState(starterPrompts.explicame);
   const [useLlmVariation, setUseLlmVariation] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: crypto.randomUUID(),
-      role: "assistant",
-      kind: "text",
-      text: "Hola. Puedo explicarte el reglamento o generarte casos para practicar clasificación crediticia.",
-      citations: []
-    }
-  ]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState("");
   const [answeringIds, setAnsweringIds] = useState<Set<string>>(new Set());
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+
+  const activeConversation = useMemo(
+    () => conversations.find((item) => item.id === activeConversationId),
+    [activeConversationId, conversations]
+  );
+  const messages = activeConversation?.messages ?? [];
+
+  useEffect(() => {
+    let cancelled = false;
+    setHistoryLoaded(false);
+    setHistoryError(null);
+
+    async function loadHistory() {
+      try {
+        const persisted = await listConversations();
+        if (cancelled) {
+          return;
+        }
+        if (persisted.length > 0) {
+          const ordered = persisted
+            .map(fromDto)
+            .sort(
+            (left, right) =>
+              new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime()
+          );
+          setConversations(ordered);
+          setActiveConversationId(ordered[0].id);
+          setMode(ordered[0].mode);
+          setMessage(starterPrompts[ordered[0].mode]);
+          setHistoryLoaded(true);
+          return;
+        }
+      } catch {
+        if (!cancelled) {
+          setHistoryError("No se pudo cargar el historial.");
+        }
+      }
+
+      if (cancelled) {
+        return;
+      }
+      const initial = createConversation();
+      setConversations([initial]);
+      setActiveConversationId(initial.id);
+      setMode(initial.mode);
+      setMessage(starterPrompts[initial.mode]);
+      setHistoryLoaded(true);
+    }
+
+    void loadHistory();
+    return () => {
+      cancelled = true;
+    };
+  }, [userKey]);
+
+  useEffect(() => {
+    if (!historyLoaded || conversations.length === 0) {
+      return;
+    }
+    for (const conversation of conversations) {
+      void saveConversation(toDto(conversation)).catch(() => {
+        setHistoryError("No se pudo guardar el historial.");
+      });
+    }
+  }, [conversations, historyLoaded]);
 
   const sendMessage = useMutation({
     mutationFn: async (input: string) => {
@@ -85,12 +211,29 @@ export function AssistantChat() {
     }
   });
 
+  function updateActiveMessages(updater: (current: ChatMessage[]) => ChatMessage[]) {
+    setConversations((current) =>
+      current.map((conversation) => {
+        if (conversation.id !== activeConversationId) {
+          return conversation;
+        }
+        const nextMessages = updater(conversation.messages);
+        return {
+          ...conversation,
+          messages: nextMessages,
+          title: getConversationTitle(nextMessages),
+          updatedAt: new Date().toISOString()
+        };
+      })
+    );
+  }
+
   function appendAssistant(
     payload:
       | Omit<AssistantTextMessage, "id" | "role">
       | Omit<AssistantExampleMessage, "id" | "role">
   ) {
-    setMessages((current) => [
+    updateActiveMessages((current) => [
       ...current,
       {
         id: crypto.randomUUID(),
@@ -108,10 +251,11 @@ export function AssistantChat() {
     if (!target) {
       return;
     }
+
     setAnsweringIds((current) => new Set(current).add(messageId));
     try {
       const result = await answerExample(target.example.data.case_id, category);
-      setMessages((current) =>
+      updateActiveMessages((current) =>
         current.map((item) =>
           item.id === messageId && item.role === "assistant" && item.kind === "example"
             ? {
@@ -137,6 +281,49 @@ export function AssistantChat() {
   function handleModeChange(nextMode: ChatMode) {
     setMode(nextMode);
     setMessage(starterPrompts[nextMode]);
+    setConversations((current) =>
+      current.map((conversation) =>
+        conversation.id === activeConversationId
+          ? { ...conversation, mode: nextMode, updatedAt: new Date().toISOString() }
+          : conversation
+      )
+    );
+  }
+
+  function startNewConversation() {
+    const next = createConversation(mode);
+    setConversations((current) => [next, ...current]);
+    setActiveConversationId(next.id);
+    setMessage(starterPrompts[next.mode]);
+  }
+
+  function selectConversation(conversation: Conversation) {
+    setActiveConversationId(conversation.id);
+    setMode(conversation.mode);
+    setMessage(starterPrompts[conversation.mode]);
+  }
+
+  function deleteConversation(conversationId: string) {
+    void deletePersistedConversation(conversationId).catch(() => {
+      setHistoryError("No se pudo eliminar la conversación.");
+    });
+    setConversations((current) => {
+      const remaining = current.filter((item) => item.id !== conversationId);
+      if (remaining.length > 0) {
+        if (conversationId === activeConversationId) {
+          setActiveConversationId(remaining[0].id);
+          setMode(remaining[0].mode);
+          setMessage(starterPrompts[remaining[0].mode]);
+        }
+        return remaining;
+      }
+
+      const fresh = createConversation();
+      setActiveConversationId(fresh.id);
+      setMode(fresh.mode);
+      setMessage(starterPrompts[fresh.mode]);
+      return [fresh];
+    });
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -145,7 +332,7 @@ export function AssistantChat() {
     if (!trimmed || sendMessage.isPending) {
       return;
     }
-    setMessages((current) => [
+    updateActiveMessages((current) => [
       ...current,
       { id: crypto.randomUUID(), role: "user", text: trimmed }
     ]);
@@ -154,79 +341,136 @@ export function AssistantChat() {
   }
 
   return (
-    <section className="chat-shell" aria-label="Chat del asistente SBS">
-      <div className="chat-toolbar">
-        <div className="mode-tabs" role="tablist" aria-label="Modo pedagógico">
-          <button
-            className={mode === "explicame" ? "active" : ""}
-            type="button"
-            onClick={() => handleModeChange("explicame")}
-          >
-            Explícame
+    <section className="assistant-workspace" aria-label="Chat del asistente SBS">
+      <div className="chat-shell">
+        <div className="chat-toolbar">
+          <div className="mode-tabs" role="tablist" aria-label="Modo pedagógico">
+            <button
+              className={mode === "explicame" ? "active" : ""}
+              type="button"
+              onClick={() => handleModeChange("explicame")}
+            >
+              Explícame
+            </button>
+            <button
+              className={mode === "ejemplifica" ? "active" : ""}
+              type="button"
+              onClick={() => handleModeChange("ejemplifica")}
+            >
+              Ejemplifica
+            </button>
+          </div>
+
+          {mode === "ejemplifica" ? (
+            <label className="inline-check">
+              <input
+                checked={useLlmVariation}
+                type="checkbox"
+                onChange={(event) => setUseLlmVariation(event.target.checked)}
+              />
+              Variar narrativa
+            </label>
+          ) : null}
+        </div>
+
+        <div className="chat-thread">
+          {historyError ? <p className="form-error">{historyError}</p> : null}
+          {messages.map((item) => (
+            <ChatBubble
+              key={item.id}
+              message={item}
+              isAnswering={answeringIds.has(item.id)}
+              onAnswer={submitExampleAnswer}
+            />
+          ))}
+          {sendMessage.isPending ? (
+            <div className="chat-row assistant">
+              <span className="avatar">
+                <Bot aria-hidden="true" size={18} />
+              </span>
+              <div className="bubble">Pensando...</div>
+            </div>
+          ) : null}
+          {sendMessage.isError ? (
+            <p className="form-error">No se pudo completar la solicitud.</p>
+          ) : null}
+        </div>
+
+        <form className="composer" onSubmit={handleSubmit}>
+          <textarea
+            value={message}
+            rows={2}
+            onChange={(event) => setMessage(event.target.value)}
+            placeholder={
+              mode === "explicame"
+                ? "Pregunta algo sobre el reglamento..."
+                : "Pide un caso para practicar..."
+            }
+          />
+          <button disabled={sendMessage.isPending || !message.trim()} type="submit">
+            {mode === "ejemplifica" ? (
+              <Sparkles aria-hidden="true" size={18} />
+            ) : (
+              <Send aria-hidden="true" size={18} />
+            )}
+            Enviar
           </button>
+        </form>
+      </div>
+
+      <aside className="history-panel" aria-label="Historial de conversaciones">
+        <div className="history-header">
+          <div>
+            <p className="eyebrow">Tu actividad</p>
+            <h2>Historial</h2>
+          </div>
           <button
-            className={mode === "ejemplifica" ? "active" : ""}
+            aria-label="Nueva conversación"
+            className="icon-button"
             type="button"
-            onClick={() => handleModeChange("ejemplifica")}
+            onClick={startNewConversation}
           >
-            Ejemplifica
+            <Plus aria-hidden="true" size={18} />
           </button>
         </div>
 
-        {mode === "ejemplifica" ? (
-          <label className="inline-check">
-            <input
-              checked={useLlmVariation}
-              type="checkbox"
-              onChange={(event) => setUseLlmVariation(event.target.checked)}
-            />
-            Variar narrativa
-          </label>
-        ) : null}
-      </div>
-
-      <div className="chat-thread">
-        {messages.map((item) => (
-          <ChatBubble
-            key={item.id}
-            message={item}
-            isAnswering={answeringIds.has(item.id)}
-            onAnswer={submitExampleAnswer}
-          />
-        ))}
-        {sendMessage.isPending ? (
-          <div className="chat-row assistant">
-            <span className="avatar">
-              <Bot aria-hidden="true" size={18} />
-            </span>
-            <div className="bubble">Pensando...</div>
-          </div>
-        ) : null}
-        {sendMessage.isError ? (
-          <p className="form-error">No se pudo completar la solicitud.</p>
-        ) : null}
-      </div>
-
-      <form className="composer" onSubmit={handleSubmit}>
-        <textarea
-          value={message}
-          rows={2}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder={
-            mode === "explicame"
-              ? "Pregunta algo sobre el reglamento..."
-              : "Pide un caso para practicar..."
-          }
-        />
-        <button disabled={sendMessage.isPending || !message.trim()} type="submit">
-          {mode === "ejemplifica" ? (
-            <Sparkles aria-hidden="true" size={18} />
-          ) : (
-            <Send aria-hidden="true" size={18} />
-          )}
-          Enviar
-        </button>
-      </form>
+        <div className="history-list">
+          {!historyLoaded ? (
+            <p className="history-empty">Cargando historial...</p>
+          ) : null}
+          {conversations.map((conversation) => (
+            <article
+              className={
+                conversation.id === activeConversationId
+                  ? "history-item active"
+                  : "history-item"
+              }
+              key={conversation.id}
+            >
+              <button type="button" onClick={() => selectConversation(conversation)}>
+                <span className="history-icon">
+                  <MessageSquareText aria-hidden="true" size={16} />
+                </span>
+                <span>
+                  <strong>{conversation.title}</strong>
+                  <small>
+                    {conversation.mode === "explicame" ? "Explícame" : "Ejemplifica"} ·{" "}
+                    {formatHistoryTime(conversation.updatedAt)}
+                  </small>
+                </span>
+              </button>
+              <button
+                aria-label={`Eliminar ${conversation.title}`}
+                className="history-delete"
+                type="button"
+                onClick={() => deleteConversation(conversation.id)}
+              >
+                <Trash2 aria-hidden="true" size={15} />
+              </button>
+            </article>
+          ))}
+        </div>
+      </aside>
     </section>
   );
 }
@@ -351,4 +595,26 @@ function ExampleAnswer({
 
 function formatLabel(value: string): string {
   return value.replaceAll("_", " ");
+}
+
+function toDto(
+  conversation: Conversation
+): Pick<ChatConversationDto, "id" | "title" | "mode" | "messages"> {
+  return {
+    id: conversation.id,
+    title: conversation.title,
+    mode: conversation.mode,
+    messages: conversation.messages as unknown as Record<string, unknown>[]
+  };
+}
+
+function fromDto(conversation: ChatConversationDto): Conversation {
+  return {
+    id: conversation.id,
+    title: conversation.title,
+    mode: conversation.mode,
+    messages: conversation.messages as ChatMessage[],
+    createdAt: conversation.created_at,
+    updatedAt: conversation.updated_at
+  };
 }

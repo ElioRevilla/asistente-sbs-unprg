@@ -78,3 +78,24 @@ class ExampleFeedbackResponse(BaseModel):
 
     type: str
     data: ExampleFeedbackDataResponse
+
+
+class ChatConversationResponse(BaseModel):
+    """Persisted chat conversation returned to the frontend."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str
+    title: str
+    mode: str
+    messages: list[dict[str, object]]
+    created_at: str
+    updated_at: str
+
+
+class ChatConversationListResponse(BaseModel):
+    """Response for the current user's persisted chat conversations."""
+
+    model_config = ConfigDict(frozen=True)
+
+    conversations: list[ChatConversationResponse]

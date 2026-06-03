@@ -71,7 +71,8 @@ textarea {
 }
 
 .login-panel,
-.chat-shell {
+.chat-shell,
+.history-panel {
   border: 1px solid rgba(120, 147, 168, 0.25);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.96);
@@ -163,7 +164,7 @@ h2 {
 }
 
 .app-shell {
-  width: min(1180px, 100%);
+  width: min(1480px, 100%);
   margin: 0 auto;
   padding: 24px;
 }
@@ -196,9 +197,23 @@ h2 {
   border-radius: 50%;
 }
 
+.assistant-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: stretch;
+}
+
 .chat-shell {
   display: grid;
   grid-template-rows: auto minmax(420px, 1fr) auto;
+  min-height: calc(100vh - 170px);
+  overflow: hidden;
+}
+
+.history-panel {
+  display: grid;
+  grid-template-rows: auto 1fr;
   min-height: calc(100vh - 170px);
   overflow: hidden;
 }
@@ -227,6 +242,108 @@ h2 {
   gap: 16px;
   border-bottom: 1px solid #dbe5ed;
   padding: 16px 18px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #dbe5ed;
+  padding: 16px;
+}
+
+.icon-button {
+  width: 38px;
+  min-height: 38px;
+  padding: 0;
+}
+
+.history-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+.history-empty {
+  margin: 6px 4px;
+  color: #5d7282;
+  font-size: 0.9rem;
+}
+
+.history-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #f7fafc;
+}
+
+.history-item.active {
+  border-color: #b8cad8;
+  background: #eaf2f8;
+}
+
+.history-item > button:first-child {
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+  min-height: 68px;
+  padding: 10px;
+  color: #17202a;
+  text-align: left;
+  background: transparent;
+}
+
+.history-item > button:first-child > span:last-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.history-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 8px;
+  color: #1f5f8b;
+  background: #ffffff;
+}
+
+.history-item strong,
+.history-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item strong {
+  font-size: 0.92rem;
+}
+
+.history-item small {
+  color: #5d7282;
+  font-size: 0.78rem;
+}
+
+.history-delete {
+  width: 34px;
+  min-height: 34px;
+  margin: 8px 8px 0 0;
+  padding: 0;
+  color: #5d7282;
+  background: transparent;
+}
+
+.history-delete:hover {
+  color: #a23824;
+  background: #ffffff;
 }
 
 .mode-tabs {
@@ -449,6 +566,15 @@ summary {
 
   .chat-shell {
     min-height: calc(100vh - 190px);
+  }
+
+  .assistant-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .history-panel {
+    min-height: auto;
+    max-height: 360px;
   }
 
   .answer-row button,
