@@ -122,6 +122,9 @@ export function AssistantChat({ userKey }: { userKey: string }) {
   const [answeringIds, setAnsweringIds] = useState<Set<string>>(new Set());
   const [historyLoaded, setHistoryLoaded] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [dirtyConversationIds, setDirtyConversationIds] = useState<Set<string>>(
+    new Set()
+  );
 
   const activeConversation = useMemo(
     () => conversations.find((item) => item.id === activeConversationId),
@@ -133,6 +136,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
     let cancelled = false;
     setHistoryLoaded(false);
     setHistoryError(null);
+    setDirtyConversationIds(new Set());
 
     async function loadHistory() {
       try {
@@ -178,15 +182,32 @@ export function AssistantChat({ userKey }: { userKey: string }) {
   }, [userKey]);
 
   useEffect(() => {
-    if (!historyLoaded || conversations.length === 0) {
+    if (
+      !historyLoaded ||
+      conversations.length === 0 ||
+      dirtyConversationIds.size === 0
+    ) {
       return;
     }
-    for (const conversation of conversations) {
-      void saveConversation(toDto(conversation)).catch(() => {
-        setHistoryError("No se pudo guardar el historial.");
-      });
+    for (const conversationId of dirtyConversationIds) {
+      const conversation = conversations.find((item) => item.id === conversationId);
+      if (!conversation) {
+        continue;
+      }
+      void saveConversation(toDto(conversation))
+        .then(() => {
+          setHistoryError(null);
+          setDirtyConversationIds((current) => {
+            const next = new Set(current);
+            next.delete(conversationId);
+            return next;
+          });
+        })
+        .catch(() => {
+          setHistoryError("No se pudo guardar el historial.");
+        });
     }
-  }, [conversations, historyLoaded]);
+  }, [conversations, dirtyConversationIds, historyLoaded]);
 
   const sendMessage = useMutation({
     mutationFn: async (input: string) => {
@@ -218,6 +239,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
           return conversation;
         }
         const nextMessages = updater(conversation.messages);
+        markConversationDirty(conversation.id);
         return {
           ...conversation,
           messages: nextMessages,
@@ -281,6 +303,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
   function handleModeChange(nextMode: ChatMode) {
     setMode(nextMode);
     setMessage(starterPrompts[nextMode]);
+    markConversationDirty(activeConversationId);
     setConversations((current) =>
       current.map((conversation) =>
         conversation.id === activeConversationId
@@ -295,6 +318,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
     setConversations((current) => [next, ...current]);
     setActiveConversationId(next.id);
     setMessage(starterPrompts[next.mode]);
+    markConversationDirty(next.id);
   }
 
   function selectConversation(conversation: Conversation) {
@@ -306,6 +330,11 @@ export function AssistantChat({ userKey }: { userKey: string }) {
   function deleteConversation(conversationId: string) {
     void deletePersistedConversation(conversationId).catch(() => {
       setHistoryError("No se pudo eliminar la conversación.");
+    });
+    setDirtyConversationIds((current) => {
+      const next = new Set(current);
+      next.delete(conversationId);
+      return next;
     });
     setConversations((current) => {
       const remaining = current.filter((item) => item.id !== conversationId);
@@ -323,6 +352,17 @@ export function AssistantChat({ userKey }: { userKey: string }) {
       setMode(fresh.mode);
       setMessage(starterPrompts[fresh.mode]);
       return [fresh];
+    });
+  }
+
+  function markConversationDirty(conversationId: string) {
+    if (!conversationId) {
+      return;
+    }
+    setDirtyConversationIds((current) => {
+      const next = new Set(current);
+      next.add(conversationId);
+      return next;
     });
   }
 
