@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import {
   firebaseAuth,
+  firebaseAuthReady,
   firebaseConfigError,
   isFirebaseConfigured
 } from "../../services/firebase";
@@ -21,9 +22,20 @@ type AuthState = {
 
 export const useAuthStore = create<AuthState>((set) => {
   if (firebaseAuth) {
-    onAuthStateChanged(firebaseAuth, (user) => {
-      set({ user, initializing: false });
-    });
+    const auth = firebaseAuth;
+    firebaseAuthReady
+      .then(() => {
+        onAuthStateChanged(auth, (user) => {
+          set({ user, initializing: false });
+        });
+      })
+      .catch(() => {
+        set({
+          error: "No se pudo inicializar Firebase Auth.",
+          initializing: false,
+          user: null
+        });
+      });
   }
 
   return {
@@ -37,6 +49,7 @@ export const useAuthStore = create<AuthState>((set) => {
       }
       try {
         set({ error: null });
+        await firebaseAuthReady;
         await signInWithEmailAndPassword(firebaseAuth, email, password);
       } catch {
         set({ error: "Usuario o contraseña incorrectos." });

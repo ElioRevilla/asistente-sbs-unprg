@@ -184,17 +184,33 @@ h2 {
 
 .session-chip {
   gap: 10px;
+  max-width: min(100%, 520px);
   border: 1px solid #c8d5df;
   border-radius: 999px;
-  padding: 6px 6px 6px 14px;
+  padding: 6px 8px 6px 14px;
   background: #ffffff;
 }
 
-.session-chip button {
-  width: 36px;
+.session-email {
+  min-width: 0;
+  overflow: hidden;
+  color: #17202a;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-chip .logout-button {
+  flex: 0 0 auto;
   min-height: 36px;
-  padding: 0;
-  border-radius: 50%;
+  border-radius: 999px;
+  padding: 0 12px;
+  color: #ffffff;
+  background: #1f5f8b;
+}
+
+.logout-button span {
+  white-space: nowrap;
 }
 
 .assistant-workspace {
@@ -575,6 +591,17 @@ summary {
   .history-panel {
     min-height: auto;
     max-height: 360px;
+  }
+
+  .session-chip {
+    display: grid;
+    max-width: 100%;
+    border-radius: 8px;
+    padding: 10px;
+  }
+
+  .session-chip .logout-button {
+    width: 100%;
   }
 
   .answer-row button,
