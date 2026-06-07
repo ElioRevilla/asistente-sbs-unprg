@@ -1,4 +1,3 @@
-from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Annotated
 from uuid import UUID
@@ -31,10 +30,7 @@ from sbs_assistant.application.use_cases.validate_example_answer import (
 )
 from sbs_assistant.config.settings import Settings, get_settings
 from sbs_assistant.infrastructure.llm.vertex_gemini_client import VertexGeminiClient
-from sbs_assistant.infrastructure.persistence.connection import (
-    close_cloud_sql_connectors,
-    create_pool,
-)
+from sbs_assistant.infrastructure.persistence.connection import get_pool
 from sbs_assistant.infrastructure.persistence.postgres_example_mastery_repo import (
     PostgresExampleMasteryRepository,
 )
@@ -57,29 +53,21 @@ class ExampleRepositories:
 
 async def get_example_repositories(
     settings: SettingsDependency,
-) -> AsyncIterator[ExampleRepositories]:
+) -> ExampleRepositories:
     """Build Ejemplifica repositories using a single database pool."""
-    pool = await create_pool(settings)
-    try:
-        yield ExampleRepositories(
-            cases=PostgresSyntheticCaseRepository(pool=pool),
-            mastery=PostgresExampleMasteryRepository(pool=pool),
-        )
-    finally:
-        await pool.close()
-        await close_cloud_sql_connectors()
+    pool = await get_pool(settings)
+    return ExampleRepositories(
+        cases=PostgresSyntheticCaseRepository(pool=pool),
+        mastery=PostgresExampleMasteryRepository(pool=pool),
+    )
 
 
 async def get_example_repository(
     settings: SettingsDependency,
-) -> AsyncIterator[PostgresSyntheticCaseRepository]:
+) -> PostgresSyntheticCaseRepository:
     """Build the synthetic case repository for tests and legacy overrides."""
-    pool = await create_pool(settings)
-    try:
-        yield PostgresSyntheticCaseRepository(pool=pool)
-    finally:
-        await pool.close()
-        await close_cloud_sql_connectors()
+    pool = await get_pool(settings)
+    return PostgresSyntheticCaseRepository(pool=pool)
 
 
 @router.post("/generate", response_model=ExampleResponse)

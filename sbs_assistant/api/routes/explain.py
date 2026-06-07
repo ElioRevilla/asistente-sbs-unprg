@@ -1,4 +1,3 @@
-from collections.abc import AsyncIterator
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -19,10 +18,7 @@ from sbs_assistant.application.use_cases.explain_concept import (
 from sbs_assistant.config.settings import Settings, get_settings
 from sbs_assistant.infrastructure.embeddings.vertex_embeddings import VertexEmbeddings
 from sbs_assistant.infrastructure.llm.vertex_gemini_client import VertexGeminiClient
-from sbs_assistant.infrastructure.persistence.connection import (
-    close_cloud_sql_connectors,
-    create_pool,
-)
+from sbs_assistant.infrastructure.persistence.connection import get_pool
 from sbs_assistant.infrastructure.persistence.postgres_provision_rule_repo import (
     PostgresProvisionRuleRepository,
 )
@@ -37,35 +33,31 @@ CurrentUserDependency = Annotated[FirebaseUser | None, Depends(get_current_user)
 
 async def get_explain_use_case(
     settings: SettingsDependency,
-) -> AsyncIterator[ExplainConceptUseCase]:
-    """Build the Explícame use case for API requests."""
+) -> ExplainConceptUseCase:
+    """Build the Explicame use case for API requests."""
     if not settings.gcp_project_id:
-        raise RuntimeError("GCP_PROJECT_ID is required for Explícame mode")
+        raise RuntimeError("GCP_PROJECT_ID is required for Explicame mode")
 
-    pool = await create_pool(settings)
-    try:
-        embeddings = VertexEmbeddings(
-            project_id=settings.gcp_project_id,
-            location=settings.vertex_ai_location,
-            model_name=settings.embeddings_model,
-        )
-        retriever = PostgresHybridRetriever(pool=pool, embeddings=embeddings)
-        llm = VertexGeminiClient(
-            project_id=settings.gcp_project_id,
-            location=settings.vertex_ai_location,
-            model_name=settings.gemini_flash_model,
-        )
-        provision_calculator = ProvisionCalculator(
-            repository=PostgresProvisionRuleRepository(pool=pool)
-        )
-        yield ExplainConceptUseCase(
-            retriever=retriever,
-            llm=llm,
-            provision_calculator=provision_calculator,
-        )
-    finally:
-        await pool.close()
-        await close_cloud_sql_connectors()
+    pool = await get_pool(settings)
+    embeddings = VertexEmbeddings(
+        project_id=settings.gcp_project_id,
+        location=settings.vertex_ai_location,
+        model_name=settings.embeddings_model,
+    )
+    retriever = PostgresHybridRetriever(pool=pool, embeddings=embeddings)
+    llm = VertexGeminiClient(
+        project_id=settings.gcp_project_id,
+        location=settings.vertex_ai_location,
+        model_name=settings.gemini_flash_model,
+    )
+    provision_calculator = ProvisionCalculator(
+        repository=PostgresProvisionRuleRepository(pool=pool)
+    )
+    return ExplainConceptUseCase(
+        retriever=retriever,
+        llm=llm,
+        provision_calculator=provision_calculator,
+    )
 
 
 @router.post("/explain", response_model=ExplainResponse)

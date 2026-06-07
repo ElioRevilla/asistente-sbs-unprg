@@ -1,4 +1,3 @@
-from collections.abc import AsyncIterator
 from typing import Annotated
 from uuid import UUID
 
@@ -11,10 +10,7 @@ from sbs_assistant.api.schemas.response_schemas import (
     ChatConversationResponse,
 )
 from sbs_assistant.config.settings import Settings, get_settings
-from sbs_assistant.infrastructure.persistence.connection import (
-    close_cloud_sql_connectors,
-    create_pool,
-)
+from sbs_assistant.infrastructure.persistence.connection import get_pool
 from sbs_assistant.infrastructure.persistence.postgres_chat_history_repo import (
     ChatConversationRecord,
     PostgresChatHistoryRepository,
@@ -27,14 +23,10 @@ CurrentUserDependency = Annotated[FirebaseUser | None, Depends(get_current_user)
 
 async def get_chat_history_repository(
     settings: SettingsDependency,
-) -> AsyncIterator[PostgresChatHistoryRepository]:
+) -> PostgresChatHistoryRepository:
     """Build the chat history repository for API requests."""
-    pool = await create_pool(settings)
-    try:
-        yield PostgresChatHistoryRepository(pool=pool)
-    finally:
-        await pool.close()
-        await close_cloud_sql_connectors()
+    pool = await get_pool(settings)
+    return PostgresChatHistoryRepository(pool=pool)
 
 
 @router.get("", response_model=ChatConversationListResponse)
