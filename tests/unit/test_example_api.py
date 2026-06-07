@@ -4,8 +4,8 @@ from fastapi.testclient import TestClient
 
 from sbs_assistant.api.main import app
 from sbs_assistant.api.routes.example import (
-    get_example_mastery_repository,
-    get_example_repository,
+    ExampleRepositories,
+    get_example_repositories,
 )
 from sbs_assistant.domain.entities.case import SyntheticCase
 from sbs_assistant.domain.entities.example_mastery import ExampleMastery
@@ -64,9 +64,9 @@ class FakeExampleMasteryRepository:
 def test_generate_example_endpoint_returns_example_payload() -> None:
     repository = FakeSyntheticCaseRepository()
     mastery_repository = FakeExampleMasteryRepository()
-    app.dependency_overrides[get_example_repository] = lambda: repository
-    app.dependency_overrides[get_example_mastery_repository] = (
-        lambda: mastery_repository
+    app.dependency_overrides[get_example_repositories] = lambda: ExampleRepositories(
+        cases=repository,
+        mastery=mastery_repository,
     )
     client = TestClient(app)
 
@@ -87,9 +87,9 @@ def test_generate_example_endpoint_returns_example_payload() -> None:
 def test_answer_example_endpoint_returns_feedback_payload() -> None:
     repository = FakeSyntheticCaseRepository()
     mastery_repository = FakeExampleMasteryRepository()
-    app.dependency_overrides[get_example_repository] = lambda: repository
-    app.dependency_overrides[get_example_mastery_repository] = (
-        lambda: mastery_repository
+    app.dependency_overrides[get_example_repositories] = lambda: ExampleRepositories(
+        cases=repository,
+        mastery=mastery_repository,
     )
     client = TestClient(app)
 

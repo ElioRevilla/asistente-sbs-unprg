@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import Annotated
 from uuid import UUID
 
@@ -46,10 +47,33 @@ SettingsDependency = Annotated[Settings, Depends(get_settings)]
 CurrentUserDependency = Annotated[FirebaseUser | None, Depends(get_current_user)]
 
 
+@dataclass(frozen=True, slots=True)
+class ExampleRepositories:
+    """Repositories used by Ejemplifica endpoints."""
+
+    cases: PostgresSyntheticCaseRepository
+    mastery: PostgresExampleMasteryRepository
+
+
+async def get_example_repositories(
+    settings: SettingsDependency,
+) -> AsyncIterator[ExampleRepositories]:
+    """Build Ejemplifica repositories using a single database pool."""
+    pool = await create_pool(settings)
+    try:
+        yield ExampleRepositories(
+            cases=PostgresSyntheticCaseRepository(pool=pool),
+            mastery=PostgresExampleMasteryRepository(pool=pool),
+        )
+    finally:
+        await pool.close()
+        await close_cloud_sql_connectors()
+
+
 async def get_example_repository(
     settings: SettingsDependency,
 ) -> AsyncIterator[PostgresSyntheticCaseRepository]:
-    """Build the synthetic case repository for API requests."""
+    """Build the synthetic case repository for tests and legacy overrides."""
     pool = await create_pool(settings)
     try:
         yield PostgresSyntheticCaseRepository(pool=pool)
@@ -58,36 +82,20 @@ async def get_example_repository(
         await close_cloud_sql_connectors()
 
 
-async def get_example_mastery_repository(
-    settings: SettingsDependency,
-) -> AsyncIterator[PostgresExampleMasteryRepository]:
-    """Build the adaptive mastery repository for API requests."""
-    pool = await create_pool(settings)
-    try:
-        yield PostgresExampleMasteryRepository(pool=pool)
-    finally:
-        await pool.close()
-        await close_cloud_sql_connectors()
-
-
 @router.post("/generate", response_model=ExampleResponse)
 async def generate_example(
     request: GenerateExampleRequestSchema,
-    repository: Annotated[
-        PostgresSyntheticCaseRepository,
-        Depends(get_example_repository),
-    ],
-    mastery_repository: Annotated[
-        PostgresExampleMasteryRepository,
-        Depends(get_example_mastery_repository),
+    repositories: Annotated[
+        ExampleRepositories,
+        Depends(get_example_repositories),
     ],
     current_user: CurrentUserDependency,
 ) -> ExampleResponse:
     """Generate an auditable synthetic debtor case."""
     student_key = _student_key(current_user=current_user, student_id=request.student_id)
     use_case = GenerateExampleUseCase(
-        repository=repository,
-        mastery_repository=mastery_repository,
+        repository=repositories.cases,
+        mastery_repository=repositories.mastery,
         variation_service=_variation_service(request.use_llm_variation),
     )
     result = await use_case.execute(
@@ -104,21 +112,17 @@ async def generate_example(
 @router.post("/answer", response_model=ExampleFeedbackResponse)
 async def answer_example(
     request: ValidateExampleAnswerRequestSchema,
-    repository: Annotated[
-        PostgresSyntheticCaseRepository,
-        Depends(get_example_repository),
-    ],
-    mastery_repository: Annotated[
-        PostgresExampleMasteryRepository,
-        Depends(get_example_mastery_repository),
+    repositories: Annotated[
+        ExampleRepositories,
+        Depends(get_example_repositories),
     ],
     current_user: CurrentUserDependency,
 ) -> ExampleFeedbackResponse:
     """Validate a student's answer to an example case."""
     student_key = _student_key(current_user=current_user, student_id=request.student_id)
     use_case = ValidateExampleAnswerUseCase(
-        repository=repository,
-        mastery_repository=mastery_repository,
+        repository=repositories.cases,
+        mastery_repository=repositories.mastery,
     )
     try:
         result = await use_case.execute(
