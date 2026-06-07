@@ -155,7 +155,7 @@ async def test_generate_example_adaptive_targets_weakest_mastery() -> None:
     assert result.adaptive is True
     assert result.target_concept == "categoria_dudoso_minorista"
     assert result.mastery_score == 0.31
-    assert result.case_data["dias_atraso"] == 75
+    assert result.case_data["dias_atraso"] == 120
 
 
 @pytest.mark.asyncio
@@ -231,6 +231,30 @@ async def test_validate_example_answer_updates_adaptive_mastery_on_error() -> No
     assert result.mastery_after < 0.5
     assert result.next_concept == "categoria_cpp_minorista"
     assert result.recommendation is not None
+
+
+@pytest.mark.asyncio
+async def test_validate_example_answer_uses_neighbor_focus_for_far_error() -> None:
+    repository = FakeSyntheticCaseRepository()
+    mastery_repository = FakeExampleMasteryRepository()
+    generated = await GenerateExampleUseCase(repository=repository).execute(
+        GenerateExampleRequest(concept="categoria Deficiente")
+    )
+    use_case = ValidateExampleAnswerUseCase(
+        repository=repository,
+        mastery_repository=mastery_repository,
+    )
+
+    result = await use_case.execute(
+        ValidateExampleAnswerRequest(
+            case_id=generated.case_id,
+            selected_category="Perdida",
+            student_id="student-1",
+        )
+    )
+
+    assert result.correct is False
+    assert result.next_concept == "categoria_cpp_minorista"
 
 
 @pytest.mark.asyncio

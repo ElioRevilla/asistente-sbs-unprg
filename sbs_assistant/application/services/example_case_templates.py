@@ -81,9 +81,13 @@ class TemplateExampleCaseGenerator:
         ),
     }
 
-    def generate(self, concept: str) -> SyntheticCase:
+    def generate(self, concept: str, variant_index: int = 0) -> SyntheticCase:
         category = self._category_from_concept(concept)
-        template = self._template_for_concept(concept=concept, category=category)
+        template = self._template_for_concept(
+            concept=concept,
+            category=category,
+            variant_index=variant_index,
+        )
         description = {
             "nombre_deudor": template.debtor_name,
             "tipo_credito": template.credit_type_label,
@@ -106,23 +110,223 @@ class TemplateExampleCaseGenerator:
         self,
         concept: str,
         category: Category,
+        variant_index: int,
     ) -> ExampleTemplate:
-        if "microempresa" not in concept.lower():
-            return self._TEMPLATES[category]
-
+        if self._is_minorist_concept(concept):
+            return self._minorist_variant(
+                category=category,
+                microenterprise="microempresa" in concept.lower(),
+                variant_index=variant_index,
+            )
         base = self._TEMPLATES[category]
+
+        return base
+
+    def _minorist_variant(
+        self,
+        *,
+        category: Category,
+        microenterprise: bool,
+        variant_index: int,
+    ) -> ExampleTemplate:
+        base = self._TEMPLATES[category]
+        variants = self._minorist_variants(category)
+        variant = variants[variant_index % len(variants)]
+        debtor_name, credit_label, credit_type, amount, days_late, context = variant
+        if microenterprise:
+            debtor_name = self._microenterprise_names(category)[
+                variant_index % len(self._microenterprise_names(category))
+            ]
+            credit_label = "microempresa"
+            credit_type = CreditType.MES
         return ExampleTemplate(
             category=base.category,
-            debtor_name="Bodega San Martin",
-            credit_type=CreditType.MES,
-            credit_type_label="microempresa",
-            amount=Decimal("10000.00"),
-            days_late=base.days_late,
-            financial_context=(
-                "financia capital de trabajo para su negocio y registra "
-                "atrasos en sus cuotas"
-            ),
+            debtor_name=debtor_name,
+            credit_type=credit_type,
+            credit_type_label=credit_label,
+            amount=amount,
+            days_late=days_late,
+            financial_context=context,
             source_article=base.source_article,
+        )
+
+    def _minorist_variants(
+        self,
+        category: Category,
+    ) -> list[tuple[str, str, CreditType, Decimal, int, str]]:
+        return {
+            Category.NORMAL: [
+                (
+                    "Comercial Los Sauces",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("4500.00"),
+                    4,
+                    "mantiene pagos casi al dia y flujo estable",
+                ),
+                (
+                    "Libreria Central",
+                    "pequena empresa",
+                    CreditType.PEQUENA_EMPRESA,
+                    Decimal("18000.00"),
+                    7,
+                    "paga dentro del rango normal y conserva ventas estables",
+                ),
+                (
+                    "Servicios Alba",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("3200.00"),
+                    0,
+                    "no presenta atraso y mantiene ingresos regulares",
+                ),
+            ],
+            Category.CPP: [
+                (
+                    "Servicios Rivas",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("6200.00"),
+                    18,
+                    "presenta atrasos recientes, pero conserva ingresos regulares",
+                ),
+                (
+                    "Minimarket Grau",
+                    "pequena empresa",
+                    CreditType.PEQUENA_EMPRESA,
+                    Decimal("22000.00"),
+                    30,
+                    "esta justo en el limite superior del rango CPP",
+                ),
+                (
+                    "Textiles Romero",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("5100.00"),
+                    9,
+                    "acumula el primer tramo de atraso relevante",
+                ),
+            ],
+            Category.DEFICIENTE: [
+                (
+                    "Distribuidora Norte",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("10000.00"),
+                    45,
+                    "sus ingresos bajaron y viene acumulando retrasos",
+                ),
+                (
+                    "Panaderia La Union",
+                    "pequena empresa",
+                    CreditType.PEQUENA_EMPRESA,
+                    Decimal("15500.00"),
+                    31,
+                    "esta en el primer dia del rango Deficiente",
+                ),
+                (
+                    "Ferreteria San Jose",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("7800.00"),
+                    60,
+                    "esta en el limite superior antes de pasar a Dudoso",
+                ),
+            ],
+            Category.DUDOSO: [
+                (
+                    "Bazar Santa Rosa",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("8500.00"),
+                    75,
+                    "tiene ventas inestables y retrasos prolongados",
+                ),
+                (
+                    "Abarrotes El Sol",
+                    "pequena empresa",
+                    CreditType.PEQUENA_EMPRESA,
+                    Decimal("26000.00"),
+                    61,
+                    "acaba de ingresar al rango Dudoso",
+                ),
+                (
+                    "Confecciones Rivera",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("9300.00"),
+                    120,
+                    "esta en el limite superior de la categoria Dudoso",
+                ),
+            ],
+            Category.PERDIDA: [
+                (
+                    "Taller El Progreso",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("12000.00"),
+                    140,
+                    "no registra pagos recientes y su actividad esta paralizada",
+                ),
+                (
+                    "Restaurante La Esquina",
+                    "pequena empresa",
+                    CreditType.PEQUENA_EMPRESA,
+                    Decimal("34000.00"),
+                    121,
+                    "supera el rango Dudoso y entra a Perdida",
+                ),
+                (
+                    "Importaciones Vega",
+                    "consumo no revolvente",
+                    CreditType.CONSUMO,
+                    Decimal("11100.00"),
+                    180,
+                    "mantiene atraso severo y no muestra recuperacion de pagos",
+                ),
+            ],
+        }[category]
+
+    def _microenterprise_names(self, category: Category) -> list[str]:
+        return {
+            Category.NORMAL: [
+                "Bodega Los Pinos",
+                "Jugueria San Miguel",
+                "Zapateria El Trebol",
+            ],
+            Category.CPP: [
+                "Bodega Santa Elena",
+                "Cevicheria Mar Azul",
+                "Taller Mecanico Ruiz",
+            ],
+            Category.DEFICIENTE: [
+                "Bodega San Martin",
+                "Panaderia La Union",
+                "Ferreteria San Jose",
+            ],
+            Category.DUDOSO: [
+                "Abarrotes El Sol",
+                "Confecciones Rivera",
+                "Polleria Las Brisas",
+            ],
+            Category.PERDIDA: [
+                "Restaurante La Esquina",
+                "Taller El Progreso",
+                "Importaciones Vega",
+            ],
+        }[category]
+
+    def _is_minorist_concept(self, concept: str) -> bool:
+        normalized = concept.lower()
+        return any(
+            marker in normalized
+            for marker in (
+                "microempresa",
+                "pequena",
+                "pequeña",
+                "consumo",
+                "minorista",
+            )
         )
 
     def _category_from_concept(self, concept: str) -> Category:

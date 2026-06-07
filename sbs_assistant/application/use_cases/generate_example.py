@@ -65,6 +65,7 @@ class GenerateExampleUseCase:
         concept = request.concept
         target_concept: str | None = None
         mastery_score: float | None = None
+        variant_index = 0
         if (
             request.adaptive
             and request.student_id
@@ -80,8 +81,12 @@ class GenerateExampleUseCase:
             concept = target.prompt
             target_concept = target.concept
             mastery_score = target.mastery_score
+            variant_index = target.variant_index
 
-        synthetic_case = self._generator.generate(concept)
+        synthetic_case = self._generator.generate(
+            concept,
+            variant_index=variant_index,
+        )
         if request.use_llm_variation and self._variation_service is not None:
             synthetic_case = await self._variation_service.vary(
                 case=synthetic_case,

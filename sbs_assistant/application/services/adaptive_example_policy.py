@@ -27,6 +27,7 @@ class AdaptiveExampleTarget:
     concept: str
     mastery_score: float
     prompt: str
+    variant_index: int = 0
 
 
 class AdaptiveExamplePolicy:
@@ -97,6 +98,7 @@ class AdaptiveExamplePolicy:
             concept=concept,
             mastery_score=weakest.mastery_score,
             prompt=self.prompt_for_concept(concept),
+            variant_index=weakest.attempts,
         )
 
     def update(
@@ -169,7 +171,11 @@ class AdaptiveExamplePolicy:
             return self._NEXT_AFTER_SUCCESS.get(target_concept, target_concept)
         if selected_category is not None:
             selected_concept = self._CATEGORY_TO_CONCEPT.get(selected_category)
-            if selected_concept and selected_concept != target_concept:
+            if (
+                selected_concept
+                and selected_concept != target_concept
+                and self._is_adjacent(target_concept, selected_concept)
+            ):
                 return selected_concept
         return self._CONFUSABLES.get(target_concept, target_concept)
 
@@ -204,3 +210,16 @@ class AdaptiveExamplePolicy:
 
     def _label(self, concept: str) -> str:
         return concept.replace("_", " ")
+
+    def _is_adjacent(self, target_concept: str, selected_concept: str) -> bool:
+        order = [
+            "categoria_normal_minorista",
+            "categoria_cpp_minorista",
+            "categoria_deficiente_minorista",
+            "categoria_dudoso_minorista",
+            "categoria_perdida_minorista",
+        ]
+        try:
+            return abs(order.index(target_concept) - order.index(selected_concept)) == 1
+        except ValueError:
+            return False
