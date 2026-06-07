@@ -127,9 +127,9 @@ def normalize_text(value: str) -> str:
 def keyword_score(expected: str, actual: str) -> float:
     """Return significant-token overlap between expected and actual answer."""
     expected_tokens = {
-        token
+        _clean_token(token)
         for token in normalize_text(expected).split()
-        if len(token) >= 4 and token not in STOPWORDS
+        if len(_clean_token(token)) >= 4 and _clean_token(token) not in STOPWORDS
     }
     if not expected_tokens:
         return 1.0
@@ -381,6 +381,11 @@ def _citation_matches(expected: str, haystack: str) -> bool:
     if "anexo i" in normalized and "anexo i" in haystack:
         return True
     return normalized in haystack
+
+
+def _clean_token(token: str) -> str:
+    """Remove boundary punctuation that should not affect lexical matching."""
+    return token.strip(".")
 
 
 def _mean(values: Any) -> float:

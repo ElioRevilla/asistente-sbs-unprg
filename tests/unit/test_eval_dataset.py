@@ -47,6 +47,13 @@ def test_keyword_score_is_accent_insensitive() -> None:
     assert keyword_score(expected, actual) == 1.0
 
 
+def test_keyword_score_matches_numeric_percent_with_trailing_period() -> None:
+    expected = "0.70%."
+    actual = "La tasa mínima aplicable es 0.70%."
+
+    assert keyword_score(expected, actual) == 1.0
+
+
 def test_citation_score_matches_numeral_labels() -> None:
     score, matched, missing = citation_score(
         ["Capítulo II, Numeral 3.3"],
