@@ -212,6 +212,44 @@ async def test_explain_concept_answers_long_stay_risk_category_by_code() -> None
 
 
 @pytest.mark.asyncio
+async def test_explain_concept_answers_minorist_deficient_days_by_code() -> None:
+    retriever = FakeRetriever(
+        chunks=[
+            Chunk(
+                id="sec_026_3_3",
+                numeral="3.3",
+                topics=["cartera_minorista"],
+                text=(
+                    "3.3 CATEGORIA DEFICIENTE. Son aquellos deudores que "
+                    "registran atraso de treinta y uno (31) a sesenta (60) "
+                    "dias calendario."
+                ),
+            )
+        ]
+    )
+    llm = FakeLLM(answer="No deberia usarse para reglas cerradas.")
+    use_case = ExplainConceptUseCase(retriever=retriever, llm=llm)
+
+    result = await use_case.execute(
+        ExplainConceptRequest(
+            question=(
+                "Para un credito a pequena empresa, microempresa o de consumo, "
+                "que rango de dias de atraso corresponde a la categoria "
+                "Deficiente?"
+            ),
+            top_k=5,
+        )
+    )
+
+    assert retriever.top_k == 10
+    assert retriever.query is not None
+    assert "3.3 categoria deficiente" in retriever.query
+    assert llm.user_prompt is None
+    assert "treinta y uno (31) a sesenta (60) dias" in result.answer
+    assert [citation.label for citation in result.citations] == ["Numeral 3.3"]
+
+
+@pytest.mark.asyncio
 async def test_explain_concept_returns_only_citations_used_in_answer() -> None:
     retriever = FakeRetriever(
         chunks=[

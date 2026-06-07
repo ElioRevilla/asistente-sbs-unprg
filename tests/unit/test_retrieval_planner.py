@@ -39,6 +39,22 @@ def test_planner_detects_long_stay_risk_category_question() -> None:
     assert plan.answer_strategy == PlannedAnswer.LONG_STAY_RISK_CATEGORY
 
 
+def test_planner_detects_minorist_deficient_days_question() -> None:
+    plan = RetrievalPlanner().plan(
+        question=(
+            "Para un credito a pequena empresa, microempresa o de consumo, "
+            "que rango de dias de atraso corresponde a la categoria Deficiente?"
+        ),
+        requested_top_k=5,
+    )
+
+    assert plan.top_k == 10
+    assert plan.query is not None
+    assert "3.3 categoria deficiente" in plan.query
+    assert "microempresas consumo" in plan.query
+    assert plan.answer_strategy == PlannedAnswer.MINORIST_DEFICIENT_DAYS
+
+
 def test_planner_keeps_default_for_general_question() -> None:
     plan = RetrievalPlanner().plan(
         question="¿Qué significa categoría Dudoso?",

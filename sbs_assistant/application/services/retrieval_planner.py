@@ -8,6 +8,7 @@ class PlannedAnswer(StrEnum):
 
     CREDIT_TYPES = "credit_types"
     LONG_STAY_RISK_CATEGORY = "long_stay_risk_category"
+    MINORIST_DEFICIENT_DAYS = "minorist_deficient_days"
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +38,16 @@ class RetrievalPlanner:
                     "categoría Pérdida más de 24 meses Tabla 1 provisiones"
                 ),
                 answer_strategy=PlannedAnswer.LONG_STAY_RISK_CATEGORY,
+            )
+        if self._asks_for_minorist_deficient_days(question):
+            return RetrievalPlan(
+                top_k=max(requested_top_k, 10),
+                query=(
+                    "3.3 categoria deficiente cartera pequenas empresas "
+                    "microempresas consumo revolvente no revolvente treinta "
+                    "y uno 31 sesenta 60 dias calendario"
+                ),
+                answer_strategy=PlannedAnswer.MINORIST_DEFICIENT_DAYS,
             )
         return RetrievalPlan(top_k=requested_top_k)
 
@@ -77,6 +88,27 @@ class RetrievalPlanner:
         )
         mentions_provision = "provision" in normalized or "provisiones" in normalized
         return mentions_risk_category and (mentions_stay or mentions_provision)
+
+    def _asks_for_minorist_deficient_days(self, question: str) -> bool:
+        normalized = self._normalize(question)
+        mentions_deficient = "deficiente" in normalized
+        mentions_days = any(
+            term in normalized
+            for term in ["dias", "atraso", "rango", "corresponde", "clasifica"]
+        )
+        mentions_minorist_portfolio = any(
+            term in normalized
+            for term in [
+                "pequena empresa",
+                "pequenas empresas",
+                "microempresa",
+                "microempresas",
+                "consumo",
+                "minorista",
+                "minoristas",
+            ]
+        )
+        return mentions_deficient and mentions_days and mentions_minorist_portfolio
 
     def _normalize(self, text: str) -> str:
         normalized = unicodedata.normalize("NFKD", text)

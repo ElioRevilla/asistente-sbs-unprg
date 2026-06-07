@@ -77,6 +77,8 @@ class ExplainConceptUseCase:
             return self._build_credit_types_result(chunks)
         if retrieval_plan.answer_strategy == PlannedAnswer.LONG_STAY_RISK_CATEGORY:
             return self._build_long_stay_risk_category_result(chunks)
+        if retrieval_plan.answer_strategy == PlannedAnswer.MINORIST_DEFICIENT_DAYS:
+            return self._build_minorist_deficient_days_result(chunks)
 
         provision_calculation = None
         if self._provision_calculator is not None:
@@ -208,6 +210,37 @@ porcentaje y monto de provisión. Cita las fuentes por artículo, numeral o anex
                 ),
             )
         )
+        return ExplainConceptResult(answer=answer, citations=citations)
+
+    def _build_minorist_deficient_days_result(
+        self,
+        chunks: list[Chunk],
+    ) -> ExplainConceptResult:
+        answer = (
+            "Para creditos a pequenas empresas, microempresas, consumo "
+            "revolvente y consumo no revolvente, la categoria Deficiente "
+            "corresponde a atrasos de treinta y uno (31) a sesenta (60) "
+            "dias calendario (Numeral 3.3)."
+        )
+        citation_chunks = [
+            chunk
+            for chunk in chunks
+            if chunk.numeral == "3.3" and "cartera_minorista" in chunk.topics
+        ]
+        if citation_chunks:
+            citations = [self._citation_from_chunk(citation_chunks[0])]
+        else:
+            citations = [
+                Citation(
+                    chunk_id="sec_026_3_3",
+                    label="Numeral 3.3",
+                    text_preview=(
+                        "3.3 CATEGORIA DEFICIENTE (2). Son aquellos deudores "
+                        "que registran atraso en el pago de sus creditos de "
+                        "treinta y uno (31) a sesenta (60) dias calendario."
+                    ),
+                )
+            ]
         return ExplainConceptResult(answer=answer, citations=citations)
 
     def _citations_from_answer(
