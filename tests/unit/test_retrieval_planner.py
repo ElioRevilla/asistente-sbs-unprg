@@ -55,6 +55,19 @@ def test_planner_detects_minorist_deficient_days_question() -> None:
     assert plan.answer_strategy == PlannedAnswer.MINORIST_DEFICIENT_DAYS
 
 
+def test_planner_does_not_use_minorist_days_strategy_for_provision_question() -> None:
+    plan = RetrievalPlanner().plan(
+        question=(
+            "Un credito a pequena empresa de S/ 50,000 esta clasificado en "
+            "categoria Deficiente, sin garantias preferidas, y debe "
+            "provisionarse segun la Tabla 1. Cuanto debe provisionar?"
+        ),
+        requested_top_k=5,
+    )
+
+    assert plan.answer_strategy is None
+
+
 def test_planner_keeps_default_for_general_question() -> None:
     plan = RetrievalPlanner().plan(
         question="¿Qué significa categoría Dudoso?",

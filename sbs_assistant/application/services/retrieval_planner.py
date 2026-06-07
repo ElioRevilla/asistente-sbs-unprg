@@ -91,11 +91,13 @@ class RetrievalPlanner:
 
     def _asks_for_minorist_deficient_days(self, question: str) -> bool:
         normalized = self._normalize(question)
-        mentions_deficient = "deficiente" in normalized
-        mentions_days = any(
+        if any(
             term in normalized
-            for term in ["dias", "atraso", "rango", "corresponde", "clasifica"]
-        )
+            for term in ["provision", "provisiones", "provisionar", "monto", "tabla"]
+        ):
+            return False
+        mentions_deficient = "deficiente" in normalized
+        mentions_days = any(term in normalized for term in ["dias", "atraso", "rango"])
         mentions_minorist_portfolio = any(
             term in normalized
             for term in [
