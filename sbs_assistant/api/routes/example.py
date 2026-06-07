@@ -34,6 +34,9 @@ from sbs_assistant.infrastructure.persistence.connection import (
     close_cloud_sql_connectors,
     create_pool,
 )
+from sbs_assistant.infrastructure.persistence.postgres_example_mastery_repo import (
+    PostgresExampleMasteryRepository,
+)
 from sbs_assistant.infrastructure.persistence.postgres_synthetic_case_repo import (
     PostgresSyntheticCaseRepository,
 )
@@ -55,6 +58,18 @@ async def get_example_repository(
         await close_cloud_sql_connectors()
 
 
+async def get_example_mastery_repository(
+    settings: SettingsDependency,
+) -> AsyncIterator[PostgresExampleMasteryRepository]:
+    """Build the adaptive mastery repository for API requests."""
+    pool = await create_pool(settings)
+    try:
+        yield PostgresExampleMasteryRepository(pool=pool)
+    finally:
+        await pool.close()
+        await close_cloud_sql_connectors()
+
+
 @router.post("/generate", response_model=ExampleResponse)
 async def generate_example(
     request: GenerateExampleRequestSchema,
@@ -62,18 +77,25 @@ async def generate_example(
         PostgresSyntheticCaseRepository,
         Depends(get_example_repository),
     ],
+    mastery_repository: Annotated[
+        PostgresExampleMasteryRepository,
+        Depends(get_example_mastery_repository),
+    ],
     current_user: CurrentUserDependency,
 ) -> ExampleResponse:
     """Generate an auditable synthetic debtor case."""
-    _ = current_user
+    student_key = _student_key(current_user=current_user, student_id=request.student_id)
     use_case = GenerateExampleUseCase(
         repository=repository,
+        mastery_repository=mastery_repository,
         variation_service=_variation_service(request.use_llm_variation),
     )
     result = await use_case.execute(
         GenerateExampleRequest(
             concept=request.concept,
+            student_id=student_key,
             use_llm_variation=request.use_llm_variation,
+            adaptive=request.adaptive,
         )
     )
     return _to_example_response(result)
@@ -86,16 +108,24 @@ async def answer_example(
         PostgresSyntheticCaseRepository,
         Depends(get_example_repository),
     ],
+    mastery_repository: Annotated[
+        PostgresExampleMasteryRepository,
+        Depends(get_example_mastery_repository),
+    ],
     current_user: CurrentUserDependency,
 ) -> ExampleFeedbackResponse:
     """Validate a student's answer to an example case."""
-    _ = current_user
-    use_case = ValidateExampleAnswerUseCase(repository=repository)
+    student_key = _student_key(current_user=current_user, student_id=request.student_id)
+    use_case = ValidateExampleAnswerUseCase(
+        repository=repository,
+        mastery_repository=mastery_repository,
+    )
     try:
         result = await use_case.execute(
             ValidateExampleAnswerRequest(
                 case_id=UUID(request.case_id),
                 selected_category=request.selected_category,
+                student_id=student_key,
             )
         )
     except ValueError as error:
@@ -112,6 +142,9 @@ def _to_example_response(result: GenerateExampleResult) -> ExampleResponse:
             case=result.case_data,
             options=result.options,
             source_article=result.source_article,
+            adaptive=result.adaptive,
+            target_concept=result.target_concept,
+            mastery_score=result.mastery_score,
         ),
     )
 
@@ -143,5 +176,22 @@ def _to_feedback_response(
             correct_category=result.correct_category,
             feedback=result.feedback,
             source_article=result.source_article,
+            target_concept=result.target_concept,
+            mastery_before=result.mastery_before,
+            mastery_after=result.mastery_after,
+            next_concept=result.next_concept,
+            recommendation=result.recommendation,
         ),
     )
+
+
+def _student_key(
+    *,
+    current_user: FirebaseUser | None,
+    student_id: str | None,
+) -> str | None:
+    if current_user is not None:
+        return current_user.uid
+    if student_id and student_id.strip():
+        return student_id.strip()
+    return None

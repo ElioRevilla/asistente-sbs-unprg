@@ -20,6 +20,9 @@ export type ExampleResponse = {
     case: Record<string, string | number | boolean | null>;
     options: string[];
     source_article: string;
+    adaptive: boolean;
+    target_concept: string | null;
+    mastery_score: number | null;
   };
 };
 
@@ -30,6 +33,11 @@ export type ExampleFeedbackResponse = {
     correct_category: string;
     feedback: string;
     source_article: string;
+    target_concept: string | null;
+    mastery_before: number | null;
+    mastery_after: number | null;
+    next_concept: string | null;
+    recommendation: string | null;
   };
 };
 

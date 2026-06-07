@@ -36,26 +36,30 @@ export async function explainQuestion(question: string): Promise<ExplainResponse
 
 export async function generateExample(
   concept: string,
-  useLlmVariation: boolean
+  useLlmVariation: boolean,
+  studentId: string | null,
+  adaptive: boolean
 ): Promise<ExampleResponse> {
   const response = await apiClient.post<ExampleResponse>("/modes/example/generate", {
     concept,
-    student_id: null,
-    use_llm_variation: useLlmVariation
+    student_id: studentId,
+    use_llm_variation: useLlmVariation,
+    adaptive
   });
   return response.data;
 }
 
 export async function answerExample(
   caseId: string,
-  selectedCategory: string
+  selectedCategory: string,
+  studentId: string | null
 ): Promise<ExampleFeedbackResponse> {
   const response = await apiClient.post<ExampleFeedbackResponse>(
     "/modes/example/answer",
     {
       case_id: caseId,
       selected_category: selectedCategory,
-      student_id: null
+      student_id: studentId
     }
   );
   return response.data;

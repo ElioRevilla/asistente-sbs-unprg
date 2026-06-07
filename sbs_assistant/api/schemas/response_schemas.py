@@ -49,6 +49,9 @@ class ExampleDataResponse(BaseModel):
     case: dict[str, object]
     options: list[str]
     source_article: str
+    adaptive: bool = False
+    target_concept: str | None = None
+    mastery_score: float | None = None
 
 
 class ExampleResponse(BaseModel):
@@ -69,6 +72,11 @@ class ExampleFeedbackDataResponse(BaseModel):
     correct_category: str
     feedback: str
     source_article: str
+    target_concept: str | None = None
+    mastery_before: float | None = None
+    mastery_after: float | None = None
+    next_concept: str | None = None
+    recommendation: str | None = None
 
 
 class ExampleFeedbackResponse(BaseModel):

@@ -1,11 +1,17 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from sbs_assistant.application.services.adaptive_example_policy import (
+    AdaptiveExamplePolicy,
+)
 from sbs_assistant.application.services.example_case_templates import (
     TemplateExampleCaseGenerator,
 )
 from sbs_assistant.application.services.llm_example_variation import (
     LLMExampleCaseVariationService,
+)
+from sbs_assistant.domain.ports.example_mastery_repository_port import (
+    ExampleMasteryRepositoryPort,
 )
 from sbs_assistant.domain.ports.synthetic_case_repository_port import (
     SyntheticCaseRepositoryPort,
@@ -19,7 +25,9 @@ class GenerateExampleRequest:
     """Input for the Ejemplifica generation use case."""
 
     concept: str
+    student_id: str | None = None
     use_llm_variation: bool = False
+    adaptive: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,6 +39,9 @@ class GenerateExampleResult:
     case_data: dict[str, object]
     options: list[str]
     source_article: str
+    adaptive: bool = False
+    target_concept: str | None = None
+    mastery_score: float | None = None
 
 
 class GenerateExampleUseCase:
@@ -39,19 +50,42 @@ class GenerateExampleUseCase:
     def __init__(
         self,
         repository: SyntheticCaseRepositoryPort,
+        mastery_repository: ExampleMasteryRepositoryPort | None = None,
         generator: TemplateExampleCaseGenerator | None = None,
+        adaptive_policy: AdaptiveExamplePolicy | None = None,
         variation_service: LLMExampleCaseVariationService | None = None,
     ) -> None:
         self._repository = repository
+        self._mastery_repository = mastery_repository
         self._generator = generator or TemplateExampleCaseGenerator()
+        self._adaptive_policy = adaptive_policy or AdaptiveExamplePolicy()
         self._variation_service = variation_service
 
     async def execute(self, request: GenerateExampleRequest) -> GenerateExampleResult:
-        synthetic_case = self._generator.generate(request.concept)
+        concept = request.concept
+        target_concept: str | None = None
+        mastery_score: float | None = None
+        if (
+            request.adaptive
+            and request.student_id
+            and self._mastery_repository is not None
+        ):
+            records = await self._mastery_repository.list_by_student(
+                request.student_id,
+            )
+            target = self._adaptive_policy.target_from_mastery(
+                records=records,
+                requested_concept=request.concept,
+            )
+            concept = target.prompt
+            target_concept = target.concept
+            mastery_score = target.mastery_score
+
+        synthetic_case = self._generator.generate(concept)
         if request.use_llm_variation and self._variation_service is not None:
             synthetic_case = await self._variation_service.vary(
                 case=synthetic_case,
-                concept=request.concept,
+                concept=concept,
             )
         saved_case = await self._repository.save(synthetic_case)
         if saved_case.id is None:
@@ -59,8 +93,11 @@ class GenerateExampleUseCase:
 
         return GenerateExampleResult(
             case_id=saved_case.id,
-            concept=request.concept,
+            concept=concept,
             case_data=saved_case.description,
             options=CATEGORY_OPTIONS,
             source_article=saved_case.source_article or "Reglamento SBS",
+            adaptive=request.adaptive,
+            target_concept=target_concept,
+            mastery_score=mastery_score,
         )

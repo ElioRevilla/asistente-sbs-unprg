@@ -246,6 +246,13 @@ h2 {
   height: 18px;
 }
 
+.toolbar-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
 .case-card,
 .feedback {
   border: 1px solid #dbe5ed;
@@ -498,6 +505,17 @@ h2 {
   gap: 14px;
 }
 
+.adaptive-note {
+  width: fit-content;
+  margin: -4px 0 0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #173f5f;
+  background: #e8f1f8;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 .citation-list {
   display: grid;
   gap: 8px;
@@ -553,6 +571,25 @@ summary {
 .feedback.warning {
   border-color: #e6c27e;
   background: #fff8e8;
+}
+
+.adaptive-feedback {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(120, 147, 168, 0.28);
+  padding-top: 10px;
+  color: #405363;
+}
+
+.adaptive-feedback span:first-child {
+  color: #173f5f;
+  font-weight: 700;
+}
+
+.adaptive-feedback small {
+  color: #5d7282;
+  font-weight: 700;
 }
 
 .composer {

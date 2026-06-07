@@ -53,6 +53,11 @@ type AssistantExampleMessage = BaseMessage & {
     correct: boolean;
     correctCategory: string;
     text: string;
+    targetConcept: string | null;
+    masteryBefore: number | null;
+    masteryAfter: number | null;
+    nextConcept: string | null;
+    recommendation: string | null;
   };
 };
 
@@ -117,6 +122,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
   const [mode, setMode] = useState<ChatMode>("explicame");
   const [message, setMessage] = useState(starterPrompts.explicame);
   const [useLlmVariation, setUseLlmVariation] = useState(false);
+  const [useAdaptivePractice, setUseAdaptivePractice] = useState(true);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState("");
   const [answeringIds, setAnsweringIds] = useState<Set<string>>(new Set());
@@ -214,7 +220,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
       if (mode === "explicame") {
         return explainQuestion(input);
       }
-      return generateExample(input, useLlmVariation);
+      return generateExample(input, useLlmVariation, userKey, useAdaptivePractice);
     },
     onSuccess: (response) => {
       if (response.type === "text") {
@@ -276,7 +282,11 @@ export function AssistantChat({ userKey }: { userKey: string }) {
 
     setAnsweringIds((current) => new Set(current).add(messageId));
     try {
-      const result = await answerExample(target.example.data.case_id, category);
+      const result = await answerExample(
+        target.example.data.case_id,
+        category,
+        userKey
+      );
       updateActiveMessages((current) =>
         current.map((item) =>
           item.id === messageId && item.role === "assistant" && item.kind === "example"
@@ -285,7 +295,12 @@ export function AssistantChat({ userKey }: { userKey: string }) {
                 feedback: {
                   correct: result.data.correct,
                   correctCategory: result.data.correct_category,
-                  text: result.data.feedback
+                  text: result.data.feedback,
+                  targetConcept: result.data.target_concept,
+                  masteryBefore: result.data.mastery_before,
+                  masteryAfter: result.data.mastery_after,
+                  nextConcept: result.data.next_concept,
+                  recommendation: result.data.recommendation
                 }
               }
             : item
@@ -402,14 +417,26 @@ export function AssistantChat({ userKey }: { userKey: string }) {
           </div>
 
           {mode === "ejemplifica" ? (
-            <label className="inline-check">
-              <input
-                checked={useLlmVariation}
-                type="checkbox"
-                onChange={(event) => setUseLlmVariation(event.target.checked)}
-              />
-              Variar narrativa
-            </label>
+            <div className="toolbar-checks">
+              <label className="inline-check">
+                <input
+                  checked={useAdaptivePractice}
+                  type="checkbox"
+                  onChange={(event) =>
+                    setUseAdaptivePractice(event.target.checked)
+                  }
+                />
+                Practica adaptativa
+              </label>
+              <label className="inline-check">
+                <input
+                  checked={useLlmVariation}
+                  type="checkbox"
+                  onChange={(event) => setUseLlmVariation(event.target.checked)}
+                />
+                Variar narrativa
+              </label>
+            </div>
           ) : null}
         </div>
 
@@ -587,6 +614,14 @@ function ExampleAnswer({
   return (
     <div className="example-message">
       <p className="source-note">{message.example.data.source_article}</p>
+      {message.example.data.adaptive ? (
+        <p className="adaptive-note">
+          Objetivo adaptativo: {formatConcept(message.example.data.target_concept)}
+          {message.example.data.mastery_score !== null
+            ? ` · dominio ${formatPercent(message.example.data.mastery_score)}`
+            : ""}
+        </p>
+      ) : null}
       <div className="case-grid">
         {Object.entries(message.example.data.case).map(([key, value]) => (
           <div key={key}>
@@ -627,6 +662,22 @@ function ExampleAnswer({
             {message.feedback.correct ? "Respuesta correcta" : "Revisemos"}
           </strong>
           <p>{message.feedback.text}</p>
+          {message.feedback.recommendation ? (
+            <div className="adaptive-feedback">
+              <span>
+                Dominio:{" "}
+                {formatPercent(message.feedback.masteryBefore)}
+                {" -> "}
+                {formatPercent(message.feedback.masteryAfter)}
+              </span>
+              <span>{message.feedback.recommendation}</span>
+              {message.feedback.nextConcept ? (
+                <small>
+                  Siguiente foco: {formatConcept(message.feedback.nextConcept)}
+                </small>
+              ) : null}
+            </div>
+          ) : null}
         </article>
       ) : null}
     </div>
@@ -635,6 +686,20 @@ function ExampleAnswer({
 
 function formatLabel(value: string): string {
   return value.replaceAll("_", " ");
+}
+
+function formatConcept(value: string | null): string {
+  if (!value) {
+    return "concepto inicial";
+  }
+  return value.replaceAll("_", " ");
+}
+
+function formatPercent(value: number | null): string {
+  if (value === null) {
+    return "--";
+  }
+  return `${Math.round(value * 100)}%`;
 }
 
 function toDto(

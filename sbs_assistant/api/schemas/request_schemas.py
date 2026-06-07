@@ -19,6 +19,7 @@ class GenerateExampleRequestSchema(BaseModel):
     concept: str = Field(min_length=1, max_length=200)
     student_id: str | None = None
     use_llm_variation: bool = False
+    adaptive: bool = False
 
 
 class ValidateExampleAnswerRequestSchema(BaseModel):

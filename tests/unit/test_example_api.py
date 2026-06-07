@@ -3,8 +3,12 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 
 from sbs_assistant.api.main import app
-from sbs_assistant.api.routes.example import get_example_repository
+from sbs_assistant.api.routes.example import (
+    get_example_mastery_repository,
+    get_example_repository,
+)
 from sbs_assistant.domain.entities.case import SyntheticCase
+from sbs_assistant.domain.entities.example_mastery import ExampleMastery
 
 
 class FakeSyntheticCaseRepository:
@@ -38,9 +42,32 @@ class FakeSyntheticCaseRepository:
         )
 
 
+class FakeExampleMasteryRepository:
+    def __init__(self) -> None:
+        self.records: dict[tuple[str, str], ExampleMastery] = {}
+
+    async def get(self, student_key: str, concept: str) -> ExampleMastery | None:
+        return self.records.get((student_key, concept))
+
+    async def list_by_student(self, student_key: str) -> list[ExampleMastery]:
+        return [
+            record
+            for (record_student_key, _), record in self.records.items()
+            if record_student_key == student_key
+        ]
+
+    async def upsert(self, mastery: ExampleMastery) -> ExampleMastery:
+        self.records[(mastery.student_key, mastery.concept)] = mastery
+        return mastery
+
+
 def test_generate_example_endpoint_returns_example_payload() -> None:
     repository = FakeSyntheticCaseRepository()
+    mastery_repository = FakeExampleMasteryRepository()
     app.dependency_overrides[get_example_repository] = lambda: repository
+    app.dependency_overrides[get_example_mastery_repository] = (
+        lambda: mastery_repository
+    )
     client = TestClient(app)
 
     response = client.post(
@@ -59,7 +86,11 @@ def test_generate_example_endpoint_returns_example_payload() -> None:
 
 def test_answer_example_endpoint_returns_feedback_payload() -> None:
     repository = FakeSyntheticCaseRepository()
+    mastery_repository = FakeExampleMasteryRepository()
     app.dependency_overrides[get_example_repository] = lambda: repository
+    app.dependency_overrides[get_example_mastery_repository] = (
+        lambda: mastery_repository
+    )
     client = TestClient(app)
 
     generated = client.post(
