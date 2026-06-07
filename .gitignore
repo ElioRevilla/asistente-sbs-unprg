@@ -9,6 +9,7 @@ htmlcov/
 .env
 data/*.pdf
 data/table_pages/
+tests/eval/eval_results*.json
 node_modules/
 dist/
 build/

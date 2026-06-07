@@ -1,0 +1,182 @@
+[
+  {
+    "id": "q001",
+    "question": "¿Cuáles son las cinco categorías de clasificación crediticia del deudor y qué dígito tiene cada una?",
+    "expected_answer": "Son cinco: Normal (0), Con Problemas Potenciales (1), Deficiente (2), Dudoso (3) y Pérdida (4).",
+    "expected_citations": ["Capítulo II, Numeral 1"],
+    "concepts": ["categorias_clasificacion"],
+    "difficulty": "basica",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q002",
+    "question": "¿Qué nivel de ventas anuales debe registrar una persona jurídica para que sus créditos sean clasificados como corporativos?",
+    "expected_answer": "Ventas anuales mayores a S/ 200 millones en los dos últimos años, de acuerdo a los estados financieros anuales auditados más recientes. Si el deudor no cuenta con estados financieros auditados, los créditos no pueden considerarse corporativos.",
+    "expected_citations": ["Capítulo I, Numeral 4.1"],
+    "concepts": ["tipos_credito", "creditos_corporativos"],
+    "difficulty": "basica",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q003",
+    "question": "¿Cuál es el rango de endeudamiento total en el sistema financiero que define a un crédito a pequeña empresa?",
+    "expected_answer": "Endeudamiento total en el sistema financiero (sin incluir créditos hipotecarios para vivienda) superior a S/ 20,000 pero no mayor a S/ 300,000 en los últimos seis meses.",
+    "expected_citations": ["Capítulo I, Numeral 4.4"],
+    "concepts": ["tipos_credito", "creditos_pequenas_empresas"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q004",
+    "question": "¿Cuál es la tasa mínima de provisión genérica para un crédito hipotecario para vivienda clasificado en categoría Normal?",
+    "expected_answer": "0.70%.",
+    "expected_citations": ["Capítulo III, Numeral 2.1"],
+    "concepts": ["provisiones_genericas", "tasas_provision"],
+    "difficulty": "basica",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q005",
+    "question": "¿Cuáles son las tasas de provisión específica de la Tabla 1 para cada categoría de riesgo?",
+    "expected_answer": "Con Problemas Potenciales 5.00%, Deficiente 25.00%, Dudoso 60.00% y Pérdida 100.00%.",
+    "expected_citations": ["Capítulo III, Numeral 2.1"],
+    "concepts": ["provisiones_especificas", "tabla_1", "tasas_provision"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q006",
+    "question": "Para un crédito a pequeña empresa, microempresa o de consumo, ¿qué rango de días de atraso corresponde a la categoría Deficiente?",
+    "expected_answer": "De 31 a 60 días calendario de atraso.",
+    "expected_citations": ["Capítulo II, Numeral 3.3"],
+    "concepts": ["categorias_clasificacion", "dias_atraso", "deudores_minoristas"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q007",
+    "question": "¿Hasta cuántos días de atraso puede tener un crédito hipotecario para vivienda y seguir clasificado en categoría Normal?",
+    "expected_answer": "Hasta treinta (30) días calendario de atraso.",
+    "expected_citations": ["Capítulo II, Numeral 4.1"],
+    "concepts": ["categorias_clasificacion", "dias_atraso", "creditos_hipotecarios"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q008",
+    "question": "¿Qué factor de conversión crediticio (FCC) se aplica a los créditos concedidos no desembolsados y a las líneas de crédito no utilizadas?",
+    "expected_answer": "0%.",
+    "expected_citations": ["Capítulo I, Numeral 3"],
+    "concepts": ["fcc", "creditos_indirectos"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q009",
+    "question": "¿Cuál es el FCC para las emisiones de cartas fianza que respaldan obligaciones de hacer y no hacer?",
+    "expected_answer": "50%.",
+    "expected_citations": ["Capítulo I, Numeral 3"],
+    "concepts": ["fcc", "creditos_indirectos", "cartas_fianza"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q010",
+    "question": "¿Cuál es la tasa mínima del componente procíclico para los créditos de consumo revolventes?",
+    "expected_answer": "1.50%.",
+    "expected_citations": ["Anexo I, Capítulo I, Numeral 2"],
+    "concepts": ["provisiones_prociclicas", "componente_prociclico", "consumo_revolvente"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q011",
+    "question": "¿Cuál es la diferencia entre una operación refinanciada y una operación reestructurada?",
+    "expected_answer": "Una operación refinanciada es un crédito directo en el que se producen variaciones de plazo y/o monto del contrato original debido a dificultades en la capacidad de pago del deudor. Una operación reestructurada es un crédito sujeto a reprogramación de pagos aprobada en un proceso de reestructuración, concurso ordinario o preventivo conforme a la Ley General del Sistema Concursal (Ley N° 27809).",
+    "expected_citations": ["Capítulo IV, Numeral 2.1", "Capítulo IV, Numeral 2.2"],
+    "concepts": ["operaciones_refinanciadas", "operaciones_reestructuradas"],
+    "difficulty": "intermedia",
+    "answer_type": "conceptual"
+  },
+  {
+    "id": "q012",
+    "question": "Al firmarse un contrato de refinanciación, ¿qué ocurre con la clasificación de riesgo de un deudor que estaba clasificado en categoría Normal?",
+    "expected_answer": "La clasificación debe mantenerse en su categoría original, salvo los deudores clasificados como Normal, que deben ser reclasificados como Con Problemas Potenciales.",
+    "expected_citations": ["Capítulo IV, Numeral 2.3"],
+    "concepts": ["operaciones_refinanciadas", "reclasificacion", "categorias_clasificacion"],
+    "difficulty": "avanzada",
+    "answer_type": "conceptual"
+  },
+  {
+    "id": "q013",
+    "question": "¿En qué situaciones debe activarse la regla procíclica para constituir provisiones procíclicas en la cartera de categoría Normal?",
+    "expected_answer": "Se activa cuando: a) el promedio de la variación porcentual anualizada del PBI de los últimos 30 meses pasa de un nivel menor al 5% a uno mayor o igual a ese umbral; b) cuando dicho promedio de 30 meses está por encima de 5% y el promedio de los últimos 12 meses es mayor en 2 puntos porcentuales al mismo indicador evaluado un año antes; o c) cuando el promedio de 30 meses está por encima de 5% y han transcurrido 18 meses desde que la regla fue desactivada por la situación del literal b.",
+    "expected_citations": ["Anexo I, Capítulo II, Numeral 1"],
+    "concepts": ["provisiones_prociclicas", "regla_prociclica", "activacion"],
+    "difficulty": "avanzada",
+    "answer_type": "conceptual"
+  },
+  {
+    "id": "q014",
+    "question": "¿Cuáles son las garantías preferidas autoliquidables reconocidas por el reglamento?",
+    "expected_answer": "Son: depósitos en efectivo en moneda nacional o extranjera en la empresa prestamista; derechos de carta de crédito o cartas de crédito stand by irrevocables con documentos negociados sin discrepancias; oro en lingotes en custodia de la empresa prestamista; y la cobertura de riesgo de crédito provista por el Fondo MIVIVIENDA S.A.",
+    "expected_citations": ["Capítulo IV, Numeral 3.12"],
+    "concepts": ["garantias_preferidas", "garantias_autoliquidables", "valuacion_garantias"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q015",
+    "question": "Para los deudores minoristas, ¿en qué caso se efectúa el procedimiento de alineamiento?",
+    "expected_answer": "Solo se efectúa el alineamiento cuando la clasificación en la entidad cuyas acreencias representen un mínimo del 20% en el sistema sea de Dudoso o Pérdida. Además, no se toma en cuenta la información crediticia del deudor con más de 1,800 días de atraso.",
+    "expected_citations": ["Capítulo I, Numeral 5.2"],
+    "concepts": ["alineamiento", "deudores_minoristas"],
+    "difficulty": "avanzada",
+    "answer_type": "conceptual"
+  },
+  {
+    "id": "q016",
+    "question": "¿Después de cuántos días de atraso se considera vencida la totalidad del crédito de un deudor no minorista?",
+    "expected_answer": "Después de transcurridos quince (15) días calendario desde la fecha de vencimiento del pago pactado.",
+    "expected_citations": ["Capítulo IV, Numeral 9"],
+    "concepts": ["clasificacion_contable", "credito_vencido", "deudores_no_minoristas"],
+    "difficulty": "intermedia",
+    "answer_type": "factual"
+  },
+  {
+    "id": "q017",
+    "question": "Un crédito de consumo no revolvente de S/ 10,000 está clasificado en categoría Normal, sin garantías, y la regla procíclica se encuentra activada. ¿Qué monto total de provisión corresponde?",
+    "expected_answer": "S/ 200. La provisión genérica de la categoría Normal para consumo no revolvente es 1.00% (S/ 100) y el componente procíclico es 1.00% (S/ 100), sumando S/ 200.",
+    "expected_citations": ["Capítulo III, Numeral 2.1", "Anexo I, Capítulo I, Numeral 2"],
+    "concepts": ["calculo_provision", "provisiones_genericas", "provisiones_prociclicas"],
+    "difficulty": "avanzada",
+    "answer_type": "calculo"
+  },
+  {
+    "id": "q018",
+    "question": "Un crédito a pequeña empresa de S/ 50,000 está clasificado en categoría Deficiente, sin garantías preferidas, y debe provisionarse según la Tabla 1. ¿Cuánto debe provisionar la empresa?",
+    "expected_answer": "S/ 12,500, que resulta de aplicar la tasa de la Tabla 1 para la categoría Deficiente (25.00%) sobre los S/ 50,000.",
+    "expected_citations": ["Capítulo III, Numeral 2.1"],
+    "concepts": ["calculo_provision", "provisiones_especificas", "tabla_1"],
+    "difficulty": "avanzada",
+    "answer_type": "calculo"
+  },
+  {
+    "id": "q019",
+    "question": "¿Qué diferencia hay entre una provisión genérica y una provisión específica?",
+    "expected_answer": "La provisión genérica se constituye de manera preventiva sobre los créditos directos y la exposición equivalente a riesgo crediticio de los créditos indirectos de deudores clasificados en categoría Normal. La provisión específica se constituye sobre los créditos de deudores clasificados en una categoría de mayor riesgo que la Normal.",
+    "expected_citations": ["Capítulo III, Numeral 1.1", "Capítulo III, Numeral 1.2"],
+    "concepts": ["provisiones_genericas", "provisiones_especificas", "clases_provisiones"],
+    "difficulty": "basica",
+    "answer_type": "conceptual"
+  },
+  {
+    "id": "q020",
+    "question": "¿Bajo qué condiciones puede el directorio proceder al castigo de un crédito incobrable?",
+    "expected_answer": "El crédito debe estar clasificado como Pérdida e íntegramente provisionado, y debe existir evidencia real y comprobable de su irrecuperabilidad, o bien que el monto del crédito no justifique iniciar acción judicial o arbitral.",
+    "expected_citations": ["Capítulo IV, Numeral 6"],
+    "concepts": ["castigo_creditos", "creditos_incobrables", "categoria_perdida"],
+    "difficulty": "intermedia",
+    "answer_type": "conceptual"
+  }
+]
