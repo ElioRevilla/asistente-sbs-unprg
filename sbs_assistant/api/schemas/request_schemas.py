@@ -32,6 +32,32 @@ class ValidateExampleAnswerRequestSchema(BaseModel):
     student_id: str | None = None
 
 
+class StartSimulationRequestSchema(BaseModel):
+    """Request for starting an adversarial simulation."""
+
+    model_config = ConfigDict(frozen=True)
+
+    focus: str | None = Field(default=None, max_length=200)
+    student_id: str | None = None
+
+
+class SubmitSimulationClassificationRequestSchema(BaseModel):
+    """Request for submitting the student's initial simulation classification."""
+
+    model_config = ConfigDict(frozen=True)
+
+    category: str = Field(min_length=1, max_length=80)
+    justification: str = Field(min_length=1, max_length=1200)
+
+
+class AdvanceSimulationTurnRequestSchema(BaseModel):
+    """Request for advancing an adversarial simulation with a defense."""
+
+    model_config = ConfigDict(frozen=True)
+
+    defense: str = Field(min_length=1, max_length=1600)
+
+
 class ChatConversationUpsertRequest(BaseModel):
     """Request for creating or updating a persisted chat conversation."""
 

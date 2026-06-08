@@ -88,6 +88,81 @@ class ExampleFeedbackResponse(BaseModel):
     data: ExampleFeedbackDataResponse
 
 
+class SimulationClassificationResponse(BaseModel):
+    """Public classification payload for adversarial simulations."""
+
+    model_config = ConfigDict(frozen=True)
+
+    category: str
+    justification: str
+
+
+class SimulationVerdictResponse(BaseModel):
+    """Public verdict payload for closed adversarial simulations."""
+
+    model_config = ConfigDict(frozen=True)
+
+    final_category: str
+    is_correct: bool
+    symbolic_score: float
+    reasoning_score: float
+    citation_score: float
+    resisted_pressure: bool
+    overall: float
+    feedback: str
+
+
+class SimulationTurnResponse(BaseModel):
+    """Public transcript turn for adversarial simulations."""
+
+    model_config = ConfigDict(frozen=True)
+
+    role: str
+    content: str
+    metadata: dict[str, object]
+    created_at: str | None = None
+
+
+class SimulationCaseResponse(BaseModel):
+    """Public operation case payload, without hidden truth until closure."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str
+    cartera_type: str
+    debtor_profile: dict[str, object]
+    narrative_hints: dict[str, object]
+    case_type: str
+    ground_truth: SimulationClassificationResponse | None = None
+    justifying_articles: list[str] | None = None
+
+
+class SimulationDataResponse(BaseModel):
+    """Public adversarial simulation session payload."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str
+    user_id: str
+    state: str
+    round: int
+    case: SimulationCaseResponse
+    classification: SimulationClassificationResponse | None = None
+    transcript: list[SimulationTurnResponse]
+    verdict: SimulationVerdictResponse | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+
+
+class SimulationResponse(BaseModel):
+    """Typed frontend payload for adversarial simulations."""
+
+    model_config = ConfigDict(frozen=True)
+
+    type: str
+    data: SimulationDataResponse
+
+
 class ChatConversationResponse(BaseModel):
     """Persisted chat conversation returned to the frontend."""
 

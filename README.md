@@ -264,6 +264,10 @@ GET  /health
 POST /modes/explain
 POST /modes/example/generate
 POST /modes/example/answer
+POST /modes/simulation/start
+POST /modes/simulation/{session_id}/classify
+POST /modes/simulation/{session_id}/turn
+GET  /modes/simulation/{session_id}
 GET  /chat/conversations
 PUT  /chat/conversations/{conversation_id}
 DELETE /chat/conversations/{conversation_id}
@@ -282,6 +286,11 @@ En `Ejemplifica`, si `adaptive=true`, el backend:
 - rota variantes auditables para evitar repetir exactamente el mismo caso.
 
 El frontend no genera otro caso si hay uno pendiente sin validar; primero pide seleccionar categoria y validar.
+
+`/modes/simulation/*` expone la simulacion adversarial: el alumno clasifica
+una operacion, responde objeciones del Supervisor y recibe veredicto al cierre.
+La verdad de fondo del caso no se serializa al cliente hasta que la sesion queda
+en estado `CLOSED`.
 
 ## Base de Datos y Migraciones
 
