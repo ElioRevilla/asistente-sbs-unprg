@@ -406,7 +406,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
     if (mode === "ejemplifica" && hasPendingExample) {
       appendAssistant({
         kind: "text",
-        text: "Primero selecciona una categorÃ­a y valida el caso pendiente. DespuÃ©s te puedo generar otro ejemplo adaptativo.",
+        text: "Primero selecciona una categor\u00eda y valida el caso pendiente. Despu\u00e9s te puedo generar otro ejemplo adaptativo.",
         citations: []
       });
       return;
