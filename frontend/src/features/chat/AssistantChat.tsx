@@ -137,6 +137,17 @@ export function AssistantChat({ userKey }: { userKey: string }) {
     [activeConversationId, conversations]
   );
   const messages = activeConversation?.messages ?? [];
+  const hasPendingExample = useMemo(
+    () =>
+      mode === "ejemplifica" &&
+      messages.some(
+        (item) =>
+          item.role === "assistant" &&
+          item.kind === "example" &&
+          !item.feedback
+      ),
+    [messages, mode]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -392,6 +403,14 @@ export function AssistantChat({ userKey }: { userKey: string }) {
       { id: crypto.randomUUID(), role: "user", text: trimmed }
     ]);
     setMessage("");
+    if (mode === "ejemplifica" && hasPendingExample) {
+      appendAssistant({
+        kind: "text",
+        text: "Primero selecciona una categorÃ­a y valida el caso pendiente. DespuÃ©s te puedo generar otro ejemplo adaptativo.",
+        citations: []
+      });
+      return;
+    }
     sendMessage.mutate(trimmed);
   }
 
