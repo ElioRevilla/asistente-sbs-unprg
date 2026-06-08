@@ -2,130 +2,110 @@
 
 Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes universitarios. El proyecto combina un backend FastAPI con arquitectura limpia, PostgreSQL/pgvector en Cloud SQL, Vertex AI para embeddings y Gemini, Firebase Authentication y un frontend React/Vite desplegable en Cloud Run.
 
-Estado actual:
+## Estado Actual
 
 - Backend FastAPI con modos `Explicame` y `Ejemplifica`.
 - RAG hibrido con PostgreSQL, pgvector, full text search en espanol y RRF.
 - Ingesta del PDF SBS con `pypdf`, chunking por secciones y embeddings Vertex AI.
 - Reglas de provision y FCC cargadas desde seeds curados.
-- Frontend React con login Firebase y chat unico con selector de modo.
+- Modo `Ejemplifica` con casos auditables, variacion narrativa opcional y practica adaptativa por estudiante.
+- Frontend React con login Firebase, historial persistido y chat unico con selector de modo.
+- Evaluacion offline con dataset de 20 preguntas de validacion.
 - CI/CD con GitHub Actions hacia dos servicios de Cloud Run.
 
-## Estructura del proyecto
+## Estructura del Proyecto
 
 ```text
 .
-├── .github/
-│   └── workflows/
-│       ├── ci.yml
-│       └── deploy.yml
-├── data/
-│   ├── fcc_rules_seed.csv
-│   └── provision_rules_seed.csv
-├── db/
-│   └── migrations/
-│       ├── 001_initial_schema.sql
-│       └── 002_create_fcc_rules.sql
-├── docs/
-│   ├── deployment_cloud_run.md
-│   └── table_inventory.md
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── App.tsx
-│   │   │   └── Dashboard.tsx
-│   │   ├── features/
-│   │   │   ├── auth/
-│   │   │   │   ├── LoginPage.tsx
-│   │   │   │   └── authStore.ts
-│   │   │   └── chat/
-│   │   │       └── AssistantChat.tsx
-│   │   ├── services/
-│   │   │   ├── apiClient.ts
-│   │   │   └── firebase.ts
-│   │   ├── shared/
-│   │   │   ├── apiTypes.ts
-│   │   │   └── markdown.tsx
-│   │   ├── main.tsx
-│   │   └── styles.css
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── package.json
-│   └── vite.config.ts
-├── sbs_assistant/
-│   ├── api/
-│   │   ├── auth/
-│   │   │   └── firebase.py
-│   │   ├── routes/
-│   │   │   ├── example.py
-│   │   │   ├── explain.py
-│   │   │   └── health.py
-│   │   ├── schemas/
-│   │   │   ├── request_schemas.py
-│   │   │   └── response_schemas.py
-│   │   └── main.py
-│   ├── application/
-│   │   ├── prompts/
-│   │   │   └── explain.py
-│   │   ├── services/
-│   │   │   ├── example_case_templates.py
-│   │   │   ├── llm_example_variation.py
-│   │   │   └── retrieval_planner.py
-│   │   └── use_cases/
-│   │       ├── calculate_provision.py
-│   │       ├── explain_concept.py
-│   │       ├── generate_example.py
-│   │       ├── ingest_document.py
-│   │       └── validate_example_answer.py
-│   ├── config/
-│   │   └── settings.py
-│   ├── domain/
-│   │   ├── entities/
-│   │   ├── ports/
-│   │   └── value_objects/
-│   └── infrastructure/
-│       ├── embeddings/
-│       ├── llm/
-│       ├── parsing/
-│       ├── persistence/
-│       ├── retrieval/
-│       └── storage/
-├── scripts/
-│   ├── check_ingestion_counts.py
-│   ├── embed_chunks.py
-│   ├── ingest_sbs_pdf.py
-│   ├── search_chunks.py
-│   ├── seed_fcc_rules.py
-│   ├── seed_provision_rules.py
-│   ├── setup_postgres.py
-│   └── setup_postgres_migrations.py
-├── tests/
-│   ├── integration/
-│   └── unit/
-├── .env.example
-├── Dockerfile
-├── pyproject.toml
-└── uv.lock
+|-- .github/
+|   `-- workflows/
+|       |-- ci.yml
+|       `-- deploy.yml
+|-- data/
+|   |-- fcc_rules_seed.csv
+|   `-- provision_rules_seed.csv
+|-- db/
+|   `-- migrations/
+|       |-- 001_initial_schema.sql
+|       |-- 002_create_fcc_rules.sql
+|       |-- 003_create_chat_conversations.sql
+|       `-- 004_create_example_mastery.sql
+|-- docs/
+|   |-- deployment_cloud_run.md
+|   `-- table_inventory.md
+|-- frontend/
+|   |-- src/
+|   |   |-- app/
+|   |   |-- features/
+|   |   |   |-- auth/
+|   |   |   `-- chat/
+|   |   |-- services/
+|   |   |-- shared/
+|   |   |-- main.tsx
+|   |   `-- styles.css
+|   |-- Dockerfile
+|   |-- nginx.conf
+|   |-- package.json
+|   `-- vite.config.ts
+|-- sbs_assistant/
+|   |-- api/
+|   |   |-- auth/
+|   |   |-- routes/
+|   |   |-- schemas/
+|   |   `-- main.py
+|   |-- application/
+|   |   |-- prompts/
+|   |   |-- services/
+|   |   |   |-- adaptive_example_policy.py
+|   |   |   |-- example_case_templates.py
+|   |   |   |-- llm_example_variation.py
+|   |   |   `-- retrieval_planner.py
+|   |   `-- use_cases/
+|   |-- config/
+|   |-- domain/
+|   |   |-- entities/
+|   |   |-- ports/
+|   |   `-- value_objects/
+|   `-- infrastructure/
+|       |-- embeddings/
+|       |-- llm/
+|       |-- parsing/
+|       |-- persistence/
+|       |-- retrieval/
+|       `-- storage/
+|-- scripts/
+|-- tests/
+|   |-- eval/
+|   |   |-- run_eval.py
+|   |   `-- sbs_validation_questions.json
+|   |-- integration/
+|   `-- unit/
+|-- .env.example
+|-- Dockerfile
+|-- pyproject.toml
+`-- uv.lock
 ```
 
-## Capas principales
+## Capas Principales
 
 ### Backend
 
 - `sbs_assistant/domain`: entidades, value objects y ports. No debe depender de FastAPI, PostgreSQL, Vertex AI ni Firebase.
 - `sbs_assistant/application`: casos de uso y servicios de aplicacion. Contiene la logica pedagogica, planificacion de retrieval y calculos deterministas.
+- `sbs_assistant/application/services/adaptive_example_policy.py`: selecciona el siguiente caso adaptativo y produce recomendaciones pedagogicas.
 - `sbs_assistant/infrastructure`: adaptadores concretos para PostgreSQL, Cloud SQL, Vertex AI, Gemini, GCS, parsing del PDF y retrieval hibrido.
+- `sbs_assistant/infrastructure/persistence/postgres_example_mastery_repo.py`: persiste dominio por estudiante y concepto en `example_mastery`.
 - `sbs_assistant/api`: app FastAPI, rutas HTTP, schemas y autenticacion Firebase.
 - `sbs_assistant/config`: settings con Pydantic Settings y variables de entorno.
 
 ### Frontend
 
 - `frontend/src/features/auth`: login Firebase y estado de sesion.
-- `frontend/src/features/chat`: interfaz principal tipo chat con selector `Explicame` / `Ejemplifica`.
+- `frontend/src/features/chat`: interfaz principal tipo chat con selector `Explicame` / `Ejemplifica`, practica adaptativa y bloqueo de casos pendientes sin validar.
 - `frontend/src/services`: cliente HTTP y configuracion Firebase.
-- `frontend/src/shared`: tipos compartidos y renderizado de markdown.
+- `frontend/src/shared`: tipos compartidos y renderizado de markdown con reparacion de mojibake para historial antiguo.
 
-### Datos y despliegue
+### Datos y Despliegue
 
 - `db/migrations`: SQL crudo versionado para Cloud SQL PostgreSQL.
 - `data`: seeds curados para reglas de provision y factores de conversion crediticia.
@@ -141,15 +121,13 @@ Estado actual:
 - Google Cloud SDK
 - Cuenta Firebase/GCP configurada para produccion
 
-## Setup local
+## Setup Local
 
 Instalar dependencias Python:
 
 ```powershell
 uv sync --all-groups
 ```
-
-Si PowerShell no reconoce `uv`, instalarlo primero o usar el ejecutable del entorno virtual si ya existe.
 
 Copiar variables base:
 
@@ -159,7 +137,7 @@ Copy-Item .env.example .env
 
 Completar `.env` con las credenciales locales necesarias. No commitear `.env`.
 
-## Ejecutar backend
+## Ejecutar Backend
 
 ```powershell
 uv run uvicorn sbs_assistant.api.main:app --reload
@@ -187,7 +165,7 @@ Respuesta esperada:
 }
 ```
 
-## Ejecutar frontend
+## Ejecutar Frontend
 
 ```powershell
 cd frontend
@@ -217,22 +195,44 @@ Para CORS local, el `.env` del backend debe incluir:
 CORS_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
 ```
 
-## Endpoints implementados
+## Endpoints Implementados
 
 ```http
 GET  /health
 POST /modes/explain
 POST /modes/example/generate
 POST /modes/example/answer
+GET  /chat/conversations
+PUT  /chat/conversations/{conversation_id}
+DELETE /chat/conversations/{conversation_id}
 ```
 
 `/modes/explain` usa retrieval hibrido, Gemini Flash y citas obligatorias.
 
 `/modes/example/*` genera y valida casos sinteticos auditables. La variacion narrativa con Gemini es opcional y solo modifica campos seguros.
 
-## Base de datos y migraciones
+En `Ejemplifica`, si `adaptive=true`, el backend:
+
+- identifica el concepto evaluado por el caso,
+- actualiza `example_mastery` cuando el estudiante valida su respuesta,
+- baja o sube dominio con una regla deterministica,
+- propone el siguiente foco pedagogico,
+- rota variantes auditables para evitar repetir exactamente el mismo caso.
+
+El frontend no genera otro caso si hay uno pendiente sin validar; primero pide seleccionar categoria y validar.
+
+## Base de Datos y Migraciones
 
 Las migraciones viven en `db/migrations` y se ejecutan en orden lexicografico.
+
+```text
+001_initial_schema.sql
+002_create_fcc_rules.sql
+003_create_chat_conversations.sql
+004_create_example_mastery.sql
+```
+
+Ejecutar migraciones:
 
 ```powershell
 uv run python scripts/setup_postgres.py
@@ -272,7 +272,7 @@ Probar busqueda:
 uv run python scripts/search_chunks.py "categoria deficiente dias atraso"
 ```
 
-## Reglas estructuradas
+## Reglas Estructuradas
 
 Seeds disponibles:
 
@@ -311,6 +311,14 @@ cd frontend
 npm.cmd run build
 ```
 
+Evaluacion offline del asistente:
+
+```powershell
+uv run python tests/eval/run_eval.py --base-url http://127.0.0.1:8000
+```
+
+Tambien puede ejecutarse contra Cloud Run pasando `--base-url`, credenciales Firebase y el dataset `tests/eval/sbs_validation_questions.json`.
+
 ## Despliegue
 
 El despliegue productivo usa dos servicios de Cloud Run:
@@ -341,7 +349,7 @@ GitHub Actions usa:
 - Secret Manager para `DB_PASSWORD`
 - Firebase Auth
 
-## Notas de seguridad
+## Notas de Seguridad
 
 - No commitear `.env`, `frontend/.env`, PDFs locales, `.venv`, `node_modules` ni `dist`.
 - `DB_PASSWORD` productivo vive en Secret Manager.
