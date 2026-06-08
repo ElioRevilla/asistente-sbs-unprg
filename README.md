@@ -29,7 +29,8 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 |       |-- 001_initial_schema.sql
 |       |-- 002_create_fcc_rules.sql
 |       |-- 003_create_chat_conversations.sql
-|       `-- 004_create_example_mastery.sql
+|       |-- 004_create_example_mastery.sql
+|       `-- 005_create_simulation_sessions.sql
 |-- docs/
 |   |-- deployment_cloud_run.md
 |   `-- table_inventory.md
@@ -291,6 +292,7 @@ Las migraciones viven en `db/migrations` y se ejecutan en orden lexicografico.
 002_create_fcc_rules.sql
 003_create_chat_conversations.sql
 004_create_example_mastery.sql
+005_create_simulation_sessions.sql
 ```
 
 Ejecutar migraciones:
