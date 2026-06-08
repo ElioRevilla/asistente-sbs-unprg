@@ -34,53 +34,114 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 |   |-- deployment_cloud_run.md
 |   `-- table_inventory.md
 |-- frontend/
+|   |-- index.html
 |   |-- src/
 |   |   |-- app/
+|   |   |   |-- App.tsx
+|   |   |   `-- Dashboard.tsx
 |   |   |-- features/
 |   |   |   |-- auth/
+|   |   |   |   |-- LoginPage.tsx
+|   |   |   |   `-- authStore.ts
 |   |   |   `-- chat/
+|   |   |       `-- AssistantChat.tsx
 |   |   |-- services/
+|   |   |   |-- apiClient.ts
+|   |   |   `-- firebase.ts
 |   |   |-- shared/
+|   |   |   |-- apiTypes.ts
+|   |   |   `-- markdown.tsx
 |   |   |-- main.tsx
+|   |   |-- vite-env.d.ts
 |   |   `-- styles.css
 |   |-- Dockerfile
 |   |-- nginx.conf
+|   |-- package-lock.json
 |   |-- package.json
+|   |-- tsconfig.json
+|   |-- tsconfig.node.json
 |   `-- vite.config.ts
 |-- sbs_assistant/
 |   |-- api/
 |   |   |-- auth/
+|   |   |   `-- firebase.py
 |   |   |-- routes/
+|   |   |   |-- chat_history.py
+|   |   |   |-- example.py
+|   |   |   |-- explain.py
+|   |   |   `-- health.py
 |   |   |-- schemas/
+|   |   |   |-- request_schemas.py
+|   |   |   `-- response_schemas.py
 |   |   `-- main.py
 |   |-- application/
 |   |   |-- prompts/
+|   |   |   `-- explain.py
 |   |   |-- services/
 |   |   |   |-- adaptive_example_policy.py
 |   |   |   |-- example_case_templates.py
 |   |   |   |-- llm_example_variation.py
 |   |   |   `-- retrieval_planner.py
 |   |   `-- use_cases/
+|   |       |-- calculate_provision.py
+|   |       |-- explain_concept.py
+|   |       |-- generate_example.py
+|   |       |-- ingest_document.py
+|   |       `-- validate_example_answer.py
 |   |-- config/
+|   |   `-- settings.py
 |   |-- domain/
 |   |   |-- entities/
 |   |   |-- ports/
 |   |   `-- value_objects/
 |   `-- infrastructure/
 |       |-- embeddings/
+|       |   |-- null_embeddings.py
+|       |   `-- vertex_embeddings.py
 |       |-- llm/
+|       |   `-- vertex_gemini_client.py
 |       |-- parsing/
+|       |   |-- pypdf_document_parser.py
+|       |   `-- sbs_text_chunker.py
 |       |-- persistence/
+|       |   |-- connection.py
+|       |   |-- postgres_chat_history_repo.py
+|       |   |-- postgres_chunk_repo.py
+|       |   |-- postgres_example_mastery_repo.py
+|       |   |-- postgres_provision_rule_repo.py
+|       |   `-- postgres_synthetic_case_repo.py
 |       |-- retrieval/
+|       |   `-- postgres_hybrid_retriever.py
 |       `-- storage/
+|           |-- gcs_storage.py
+|           |-- http_pdf_storage.py
+|           `-- local_pdf_storage.py
 |-- scripts/
+|   |-- check_ingestion_counts.py
+|   |-- embed_chunks.py
+|   |-- ingest_sbs_pdf.py
+|   |-- search_chunks.py
+|   |-- seed_fcc_rules.py
+|   |-- seed_provision_rules.py
+|   |-- setup_postgres.py
+|   `-- setup_postgres_migrations.py
 |-- tests/
 |   |-- eval/
+|   |   |-- __init__.py
 |   |   |-- run_eval.py
 |   |   `-- sbs_validation_questions.json
 |   |-- integration/
+|   |   `-- __init__.py
 |   `-- unit/
+|       |-- test_example_api.py
+|       |-- test_explain_api.py
+|       |-- test_generate_example.py
+|       |-- test_health.py
+|       `-- ...
+|-- .dockerignore
 |-- .env.example
+|-- .gitignore
+|-- AGENTS.md
 |-- Dockerfile
 |-- pyproject.toml
 `-- uv.lock
