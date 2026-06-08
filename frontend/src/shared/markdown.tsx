@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 
 export function renderAssistantMarkdown(text: string): ReactNode[] {
-  const blocks = text
+  const normalizedText = repairMojibake(text);
+  const blocks = normalizedText
     .split(/\n{2,}/)
     .map((block) => block.replace(/\s+$/g, ""))
     .filter(Boolean);
@@ -28,6 +29,31 @@ export function renderAssistantMarkdown(text: string): ReactNode[] {
 
     return <p key={index}>{renderInline(block)}</p>;
   });
+}
+
+function repairMojibake(text: string): string {
+  const replacements: Record<string, string> = {
+    "Ã¡": "á",
+    "Ã©": "é",
+    "Ã­": "í",
+    "Ã³": "ó",
+    "Ãº": "ú",
+    "Ã±": "ñ",
+    "Ã": "Á",
+    "Ã‰": "É",
+    "Ã": "Í",
+    "Ã“": "Ó",
+    "Ãš": "Ú",
+    "Ã‘": "Ñ",
+    "Â¿": "¿",
+    "Â¡": "¡",
+    "Â·": "·",
+    "Â°": "°"
+  };
+  return Object.entries(replacements).reduce(
+    (current, [broken, fixed]) => current.replaceAll(broken, fixed),
+    text
+  );
 }
 
 function parseBulletLine(line: string): { level: number; text: string } | null {
