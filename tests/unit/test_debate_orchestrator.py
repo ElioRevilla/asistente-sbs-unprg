@@ -233,18 +233,21 @@ async def test_advance_defense_continues_without_repeating_prior_objections() ->
         ),
     )
 
-    next_challenge = await orchestrator.advance_defense(
+    closed = await orchestrator.advance_defense(
         challenged,
         defense="Defiendo mi criterio inicial.",
     )
 
-    assert next_challenge.state == SimulationState.DEFEND
-    assert next_challenge.round == 2
-    assert next_challenge.verdict is None
+    assert closed.state == SimulationState.CLOSED
+    assert closed.round == 2
+    assert closed.verdict is not None
+    assert closed.transcript[-2].role == "supervisor"
+    assert closed.transcript[-1].role == "juez"
     assert agents.challenge_calls == 2
+    assert agents.pressure_calls == 1
     assert agents.prior_objections_seen[0] == []
     assert agents.prior_objections_seen[1] == ["Objecion 1: debe revisar Deficiente"]
-    assert judge.calls == 0
+    assert judge.calls == 1
 
 
 @pytest.mark.asyncio

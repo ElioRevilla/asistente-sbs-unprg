@@ -950,7 +950,10 @@ function SimulationAnswer({
           <button
             disabled={!defense.trim() || isAnswering}
             type="button"
-            onClick={() => onDefend(message.id, defense.trim())}
+            onClick={() => {
+              onDefend(message.id, defense.trim());
+              setDefense("");
+            }}
           >
             <Send aria-hidden="true" size={18} />
             Enviar defensa

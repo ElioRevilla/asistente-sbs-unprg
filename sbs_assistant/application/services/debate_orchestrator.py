@@ -114,18 +114,33 @@ class DebateOrchestrator:
             last_defense=last_defense,
             prior_objections=prior_objections,
         )
-        bank_turn = await self._agents.pressure(
-            session.case,
-            session.classification,
-        )
         next_round = session.round + 1
-        return replace(
+        supervisor_appended = replace(
             session,
             state=SimulationState.DEFEND,
             round=next_round,
             transcript=[
                 *session.transcript,
                 self._supervisor_turn(supervisor_turn),
+            ],
+            updated_at=self._now(),
+        )
+        if (
+            last_defense is not None
+            and next_round >= MIN_ROUNDS
+            and not supervisor_turn.objection_remaining
+        ):
+            return await self._close(supervisor_appended)
+
+        bank_turn = await self._agents.pressure(
+            session.case,
+            session.classification,
+        )
+        return replace(
+            supervisor_appended,
+            state=SimulationState.DEFEND,
+            transcript=[
+                *supervisor_appended.transcript,
                 self._turn(
                     role="banco",
                     content=bank_turn.pressure,
@@ -134,7 +149,6 @@ class DebateOrchestrator:
                     },
                 ),
             ],
-            updated_at=self._now(),
         )
 
     async def _close(self, session: SimulationSession) -> SimulationSession:
