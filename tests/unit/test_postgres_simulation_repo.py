@@ -1,3 +1,4 @@
+import inspect
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -12,6 +13,7 @@ from sbs_assistant.domain.value_objects.classification import Classification
 from sbs_assistant.domain.value_objects.risk_category import RiskCategory
 from sbs_assistant.domain.value_objects.verdict import Verdict
 from sbs_assistant.infrastructure.persistence.postgres_simulation_repo import (
+    PostgresSimulationRepository,
     _case_from_payload,
     _case_to_payload,
     _classification_to_payload,
@@ -81,6 +83,13 @@ def test_row_to_session_restores_full_session() -> None:
     assert restored.transcript[0].role == "alumno"
     assert restored.verdict is not None
     assert restored.verdict.overall == 0.95
+
+
+def test_repository_quotes_reserved_case_column_in_sql() -> None:
+    source = inspect.getsource(PostgresSimulationRepository)
+
+    assert 'id, user_id, "case", state' in source
+    assert '"case" = $2::jsonb' in source
 
 
 def _case() -> OperationCase:

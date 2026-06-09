@@ -30,7 +30,7 @@ class PostgresSimulationRepository(SimulationRepositoryPort):
         row = await self._pool.fetchrow(
             """
             INSERT INTO simulation_sessions (
-              id, user_id, case, state, round, classification, transcript,
+              id, user_id, "case", state, round, classification, transcript,
               verdict, updated_at
             )
             VALUES ($1, $2, $3::jsonb, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb, NOW())
@@ -64,7 +64,7 @@ class PostgresSimulationRepository(SimulationRepositoryPort):
         row = await self._pool.fetchrow(
             """
             UPDATE simulation_sessions SET
-              case = $2::jsonb,
+              "case" = $2::jsonb,
               state = $3,
               round = $4,
               classification = $5::jsonb,

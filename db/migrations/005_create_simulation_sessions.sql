@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS simulation_sessions (
   id UUID PRIMARY KEY,
   user_id TEXT NOT NULL,
-  case JSONB NOT NULL,
+  "case" JSONB NOT NULL,
   state TEXT NOT NULL,
   round INT NOT NULL DEFAULT 0,
   classification JSONB,
