@@ -41,10 +41,57 @@ export type ExampleFeedbackResponse = {
   };
 };
 
+export type SimulationClassification = {
+  category: string;
+  justification: string;
+};
+
+export type SimulationTurn = {
+  role: string;
+  content: string;
+  metadata: Record<string, unknown>;
+  created_at: string | null;
+};
+
+export type SimulationVerdict = {
+  final_category: string;
+  is_correct: boolean;
+  symbolic_score: number;
+  reasoning_score: number;
+  citation_score: number;
+  resisted_pressure: boolean;
+  overall: number;
+  feedback: string;
+};
+
+export type SimulationResponse = {
+  type: "simulation";
+  data: {
+    id: string;
+    user_id: string;
+    state: "present" | "classify" | "challenge" | "defend" | "closed";
+    round: number;
+    case: {
+      id: string;
+      cartera_type: string;
+      debtor_profile: Record<string, string | number | boolean | null>;
+      narrative_hints: Record<string, string | number | boolean | null>;
+      case_type: string;
+      ground_truth: SimulationClassification | null;
+      justifying_articles: string[] | null;
+    };
+    classification: SimulationClassification | null;
+    transcript: SimulationTurn[];
+    verdict: SimulationVerdict | null;
+    created_at: string | null;
+    updated_at: string | null;
+  };
+};
+
 export type ChatConversationDto = {
   id: string;
   title: string;
-  mode: "explicame" | "ejemplifica";
+  mode: "explicame" | "ejemplifica" | "simulacion";
   messages: Record<string, unknown>[];
   created_at: string;
   updated_at: string;

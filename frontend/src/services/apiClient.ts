@@ -5,7 +5,8 @@ import type {
   ChatConversationListResponse,
   ExampleFeedbackResponse,
   ExampleResponse,
-  ExplainResponse
+  ExplainResponse,
+  SimulationResponse
 } from "../shared/apiTypes";
 import { firebaseAuth } from "./firebase";
 
@@ -60,6 +61,48 @@ export async function answerExample(
       case_id: caseId,
       selected_category: selectedCategory,
       student_id: studentId
+    }
+  );
+  return response.data;
+}
+
+export async function startSimulation(
+  focus: string,
+  studentId: string | null
+): Promise<SimulationResponse> {
+  const response = await apiClient.post<SimulationResponse>(
+    "/modes/simulation/start",
+    {
+      focus,
+      student_id: studentId
+    }
+  );
+  return response.data;
+}
+
+export async function classifySimulation(
+  sessionId: string,
+  category: string,
+  justification: string
+): Promise<SimulationResponse> {
+  const response = await apiClient.post<SimulationResponse>(
+    `/modes/simulation/${sessionId}/classify`,
+    {
+      category,
+      justification
+    }
+  );
+  return response.data;
+}
+
+export async function advanceSimulationTurn(
+  sessionId: string,
+  defense: string
+): Promise<SimulationResponse> {
+  const response = await apiClient.post<SimulationResponse>(
+    `/modes/simulation/${sessionId}/turn`,
+    {
+      defense
     }
   );
   return response.data;

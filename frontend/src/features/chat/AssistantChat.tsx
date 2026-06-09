@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Bot,
   CheckCircle2,
+  Gavel,
   MessageSquareText,
   Plus,
   Send,
@@ -12,21 +13,25 @@ import {
 import { useMutation } from "@tanstack/react-query";
 
 import {
+  advanceSimulationTurn,
   answerExample,
+  classifySimulation,
   deleteConversation as deletePersistedConversation,
   explainQuestion,
   generateExample,
   listConversations,
-  saveConversation
+  saveConversation,
+  startSimulation
 } from "../../services/apiClient";
 import type {
   ChatConversationDto,
   Citation,
-  ExampleResponse
+  ExampleResponse,
+  SimulationResponse
 } from "../../shared/apiTypes";
 import { renderAssistantMarkdown } from "../../shared/markdown";
 
-type ChatMode = "explicame" | "ejemplifica";
+type ChatMode = "explicame" | "ejemplifica" | "simulacion";
 
 type BaseMessage = {
   id: string;
@@ -61,7 +66,17 @@ type AssistantExampleMessage = BaseMessage & {
   };
 };
 
-type ChatMessage = UserMessage | AssistantTextMessage | AssistantExampleMessage;
+type AssistantSimulationMessage = BaseMessage & {
+  role: "assistant";
+  kind: "simulation";
+  simulation: SimulationResponse;
+};
+
+type ChatMessage =
+  | UserMessage
+  | AssistantTextMessage
+  | AssistantExampleMessage
+  | AssistantSimulationMessage;
 
 type Conversation = {
   id: string;
@@ -75,6 +90,8 @@ type Conversation = {
 const starterPrompts: Record<ChatMode, string> = {
   explicame: "¿En qué casos un deudor se clasifica en categoría Dudoso?",
   ejemplifica: "Genera un caso de un deudor de microempresa en categoría Deficiente."
+  ,
+  simulacion: "Inicia una simulacion adversarial de microempresa Deficiente."
 };
 
 function createWelcomeMessage(): AssistantTextMessage {
@@ -145,6 +162,17 @@ export function AssistantChat({ userKey }: { userKey: string }) {
           item.role === "assistant" &&
           item.kind === "example" &&
           !item.feedback
+      ),
+    [messages, mode]
+  );
+  const hasOpenSimulation = useMemo(
+    () =>
+      mode === "simulacion" &&
+      messages.some(
+        (item) =>
+          item.role === "assistant" &&
+          item.kind === "simulation" &&
+          item.simulation.data.state !== "closed"
       ),
     [messages, mode]
   );
@@ -231,7 +259,10 @@ export function AssistantChat({ userKey }: { userKey: string }) {
       if (mode === "explicame") {
         return explainQuestion(input);
       }
-      return generateExample(input, useLlmVariation, userKey, useAdaptivePractice);
+      if (mode === "ejemplifica") {
+        return generateExample(input, useLlmVariation, userKey, useAdaptivePractice);
+      }
+      return startSimulation(input, userKey);
     },
     onSuccess: (response) => {
       if (response.type === "text") {
@@ -242,9 +273,16 @@ export function AssistantChat({ userKey }: { userKey: string }) {
         });
         return;
       }
+      if (response.type === "example") {
+        appendAssistant({
+          kind: "example",
+          example: response
+        });
+        return;
+      }
       appendAssistant({
-        kind: "example",
-        example: response
+        kind: "simulation",
+        simulation: response
       });
     }
   });
@@ -271,6 +309,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
     payload:
       | Omit<AssistantTextMessage, "id" | "role">
       | Omit<AssistantExampleMessage, "id" | "role">
+      | Omit<AssistantSimulationMessage, "id" | "role">
   ) {
     updateActiveMessages((current) => [
       ...current,
@@ -324,6 +363,74 @@ export function AssistantChat({ userKey }: { userKey: string }) {
         return next;
       });
     }
+  }
+
+  async function submitSimulationClassification(
+    messageId: string,
+    category: string,
+    justification: string
+  ) {
+    const target = messages.find(
+      (item): item is AssistantSimulationMessage =>
+        item.id === messageId &&
+        item.role === "assistant" &&
+        item.kind === "simulation"
+    );
+    if (!target) {
+      return;
+    }
+
+    setAnsweringIds((current) => new Set(current).add(messageId));
+    try {
+      const result = await classifySimulation(
+        target.simulation.data.id,
+        category,
+        justification
+      );
+      updateSimulationMessage(messageId, result);
+    } finally {
+      setAnsweringIds((current) => {
+        const next = new Set(current);
+        next.delete(messageId);
+        return next;
+      });
+    }
+  }
+
+  async function submitSimulationDefense(messageId: string, defense: string) {
+    const target = messages.find(
+      (item): item is AssistantSimulationMessage =>
+        item.id === messageId &&
+        item.role === "assistant" &&
+        item.kind === "simulation"
+    );
+    if (!target) {
+      return;
+    }
+
+    setAnsweringIds((current) => new Set(current).add(messageId));
+    try {
+      const result = await advanceSimulationTurn(target.simulation.data.id, defense);
+      updateSimulationMessage(messageId, result);
+    } finally {
+      setAnsweringIds((current) => {
+        const next = new Set(current);
+        next.delete(messageId);
+        return next;
+      });
+    }
+  }
+
+  function updateSimulationMessage(messageId: string, simulation: SimulationResponse) {
+    updateActiveMessages((current) =>
+      current.map((item) =>
+        item.id === messageId &&
+        item.role === "assistant" &&
+        item.kind === "simulation"
+          ? { ...item, simulation }
+          : item
+      )
+    );
   }
 
   function handleModeChange(nextMode: ChatMode) {
@@ -411,6 +518,14 @@ export function AssistantChat({ userKey }: { userKey: string }) {
       });
       return;
     }
+    if (mode === "simulacion" && hasOpenSimulation) {
+      appendAssistant({
+        kind: "text",
+        text: "Primero cierra la simulacion adversarial actual: clasifica, defiende tu criterio y espera el veredicto del juez.",
+        citations: []
+      });
+      return;
+    }
     sendMessage.mutate(trimmed);
   }
 
@@ -432,6 +547,13 @@ export function AssistantChat({ userKey }: { userKey: string }) {
               onClick={() => handleModeChange("ejemplifica")}
             >
               Ejemplifica
+            </button>
+            <button
+              className={mode === "simulacion" ? "active" : ""}
+              type="button"
+              onClick={() => handleModeChange("simulacion")}
+            >
+              Simulacion
             </button>
           </div>
 
@@ -467,6 +589,8 @@ export function AssistantChat({ userKey }: { userKey: string }) {
               message={item}
               isAnswering={answeringIds.has(item.id)}
               onAnswer={submitExampleAnswer}
+              onSimulationClassify={submitSimulationClassification}
+              onSimulationDefend={submitSimulationDefense}
             />
           ))}
           {sendMessage.isPending ? (
@@ -490,12 +614,16 @@ export function AssistantChat({ userKey }: { userKey: string }) {
             placeholder={
               mode === "explicame"
                 ? "Pregunta algo sobre el reglamento..."
-                : "Pide un caso para practicar..."
+                : mode === "ejemplifica"
+                  ? "Pide un caso para practicar..."
+                  : "Pide una simulacion adversarial..."
             }
           />
           <button disabled={sendMessage.isPending || !message.trim()} type="submit">
             {mode === "ejemplifica" ? (
               <Sparkles aria-hidden="true" size={18} />
+            ) : mode === "simulacion" ? (
+              <Gavel aria-hidden="true" size={18} />
             ) : (
               <Send aria-hidden="true" size={18} />
             )}
@@ -564,11 +692,19 @@ export function AssistantChat({ userKey }: { userKey: string }) {
 function ChatBubble({
   message,
   isAnswering,
-  onAnswer
+  onAnswer,
+  onSimulationClassify,
+  onSimulationDefend
 }: {
   message: ChatMessage;
   isAnswering: boolean;
   onAnswer: (messageId: string, category: string) => void;
+  onSimulationClassify: (
+    messageId: string,
+    category: string,
+    justification: string
+  ) => void;
+  onSimulationDefend: (messageId: string, defense: string) => void;
 }) {
   if (message.role === "user") {
     return (
@@ -589,11 +725,18 @@ function ChatBubble({
       <div className="bubble">
         {message.kind === "text" ? (
           <TextAnswer message={message} />
-        ) : (
+        ) : message.kind === "example" ? (
           <ExampleAnswer
             message={message}
             isAnswering={isAnswering}
             onAnswer={onAnswer}
+          />
+        ) : (
+          <SimulationAnswer
+            message={message}
+            isAnswering={isAnswering}
+            onClassify={onSimulationClassify}
+            onDefend={onSimulationDefend}
           />
         )}
       </div>
@@ -701,6 +844,168 @@ function ExampleAnswer({
       ) : null}
     </div>
   );
+}
+
+function SimulationAnswer({
+  message,
+  isAnswering,
+  onClassify,
+  onDefend
+}: {
+  message: AssistantSimulationMessage;
+  isAnswering: boolean;
+  onClassify: (messageId: string, category: string, justification: string) => void;
+  onDefend: (messageId: string, defense: string) => void;
+}) {
+  const [category, setCategory] = useState("");
+  const [justification, setJustification] = useState("");
+  const [defense, setDefense] = useState("");
+  const simulation = message.simulation.data;
+  const canClassify = simulation.state === "classify";
+  const canDefend = simulation.state === "defend";
+
+  return (
+    <div className="simulation-message">
+      <div className="simulation-header">
+        <span>Simulacion adversarial</span>
+        <strong>{simulation.state}</strong>
+      </div>
+
+      <div className="simulation-case">
+        <p className="source-note">
+          Cartera {formatConcept(simulation.case.cartera_type)} · caso{" "}
+          {formatConcept(simulation.case.case_type)}
+        </p>
+        <div className="case-grid">
+          {Object.entries(simulation.case.debtor_profile).map(([key, value]) => (
+            <div key={key}>
+              <span>{formatLabel(key)}</span>
+              <strong>{String(value)}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="simulation-transcript">
+        {simulation.transcript.map((turn, index) => (
+          <article className={`simulation-turn ${turn.role}`} key={`${turn.role}-${index}`}>
+            <span>{roleLabel(turn.role)}</span>
+            <p>{turn.content}</p>
+            {turn.metadata.cited_articles ? (
+              <small>
+                Citas: {String((turn.metadata.cited_articles as string[]).join(", "))}
+              </small>
+            ) : null}
+          </article>
+        ))}
+      </div>
+
+      {canClassify ? (
+        <div className="simulation-form">
+          <label>
+            Categoria que defenderas
+            <select
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
+            >
+              <option value="">Selecciona categoria</option>
+              {riskCategoryOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Justificacion inicial
+            <textarea
+              rows={3}
+              value={justification}
+              onChange={(event) => setJustification(event.target.value)}
+              placeholder="Sustenta tu criterio con dias de atraso, tipo de cartera o articulo aplicable..."
+            />
+          </label>
+          <button
+            disabled={!category || !justification.trim() || isAnswering}
+            type="button"
+            onClick={() => onClassify(message.id, category, justification.trim())}
+          >
+            <Gavel aria-hidden="true" size={18} />
+            Defender criterio
+          </button>
+        </div>
+      ) : null}
+
+      {canDefend ? (
+        <div className="simulation-form">
+          <label>
+            Defensa ante Supervisor y Banco
+            <textarea
+              rows={3}
+              value={defense}
+              onChange={(event) => setDefense(event.target.value)}
+              placeholder="Responde la objecion, corrige si hace falta y cita el criterio normativo..."
+            />
+          </label>
+          <button
+            disabled={!defense.trim() || isAnswering}
+            type="button"
+            onClick={() => onDefend(message.id, defense.trim())}
+          >
+            <Send aria-hidden="true" size={18} />
+            Enviar defensa
+          </button>
+        </div>
+      ) : null}
+
+      {simulation.verdict ? (
+        <article className="simulation-verdict">
+          <strong>Veredicto del juez</strong>
+          <p>{simulation.verdict.feedback}</p>
+          <div>
+            <span>Categoria final: {simulation.verdict.final_category}</span>
+            <span>Resultado: {formatPercent(simulation.verdict.overall)}</span>
+          </div>
+          {simulation.case.ground_truth ? (
+            <small>
+              Verdad de fondo: {simulation.case.ground_truth.category} ·{" "}
+              {simulation.case.justifying_articles?.join(", ")}
+            </small>
+          ) : null}
+        </article>
+      ) : null}
+    </div>
+  );
+}
+
+const riskCategoryOptions = [
+  "Normal",
+  "CPP",
+  "Deficiente",
+  "Dudoso",
+  "Perdida"
+];
+
+function roleLabel(role: string): string {
+  return (
+    {
+      alumno: "Alumno",
+      banco: "Banco",
+      cliente: "Cliente",
+      juez: "Juez",
+      supervisor: "Supervisor SBS"
+    }[role] ?? role
+  );
+}
+
+function modeLabel(mode: ChatMode): string {
+  if (mode === "explicame") {
+    return "Explicame";
+  }
+  if (mode === "ejemplifica") {
+    return "Ejemplifica";
+  }
+  return "Simulacion";
 }
 
 function formatLabel(value: string): string {

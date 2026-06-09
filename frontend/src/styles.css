@@ -505,6 +505,116 @@ h2 {
   gap: 14px;
 }
 
+.simulation-message {
+  display: grid;
+  gap: 14px;
+}
+
+.simulation-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid #dbe5ed;
+  padding-bottom: 10px;
+}
+
+.simulation-header span {
+  color: #173f5f;
+  font-weight: 800;
+}
+
+.simulation-header strong {
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #173f5f;
+  background: #e8f1f8;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+}
+
+.simulation-case,
+.simulation-form,
+.simulation-verdict {
+  display: grid;
+  gap: 12px;
+}
+
+.simulation-transcript {
+  display: grid;
+  gap: 10px;
+}
+
+.simulation-turn {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #dbe5ed;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.simulation-turn span {
+  color: #173f5f;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.simulation-turn.cliente {
+  border-color: #bfd3e2;
+  background: #f4f9fc;
+}
+
+.simulation-turn.supervisor {
+  border-color: #dec38b;
+  background: #fff9ed;
+}
+
+.simulation-turn.banco {
+  border-color: #c7d0dd;
+  background: #f7f9fc;
+}
+
+.simulation-turn.alumno {
+  border-color: #a8c7de;
+  background: #eef6fb;
+}
+
+.simulation-turn.juez,
+.simulation-verdict {
+  border: 1px solid #9bd3b2;
+  border-radius: 8px;
+  padding: 12px;
+  background: #effaf3;
+}
+
+.simulation-turn small,
+.simulation-verdict small {
+  color: #5d7282;
+}
+
+.simulation-form {
+  border-top: 1px solid #dbe5ed;
+  padding-top: 12px;
+}
+
+.simulation-form label {
+  display: grid;
+  gap: 8px;
+  color: #405363;
+  font-weight: 700;
+}
+
+.simulation-verdict div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #173f5f;
+  font-weight: 700;
+}
+
 .adaptive-note {
   width: fit-content;
   margin: -4px 0 0;

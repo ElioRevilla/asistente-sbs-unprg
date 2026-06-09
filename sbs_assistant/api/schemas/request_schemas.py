@@ -64,5 +64,5 @@ class ChatConversationUpsertRequest(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     title: str = Field(min_length=1, max_length=160)
-    mode: str = Field(pattern="^(explicame|ejemplifica)$")
+    mode: str = Field(pattern="^(explicame|ejemplifica|simulacion)$")
     messages: list[dict[str, object]] = Field(default_factory=list, max_length=200)
