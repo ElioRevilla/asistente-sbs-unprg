@@ -7,7 +7,10 @@ import type {
   ExampleResponse,
   ExplainResponse,
   SimulationResponse,
-  TeacherOverview
+  TeacherConceptAnalytics,
+  TeacherOverview,
+  TeacherStudentAnalytics,
+  TeacherStudentSummary
 } from "../shared/apiTypes";
 import { firebaseAuth } from "./firebase";
 
@@ -136,5 +139,28 @@ export async function deleteConversation(conversationId: string): Promise<void> 
 
 export async function fetchTeacherOverview(): Promise<TeacherOverview> {
   const response = await apiClient.get<TeacherOverview>("/teacher/overview");
+  return response.data;
+}
+
+export async function fetchTeacherStudents(): Promise<TeacherStudentSummary[]> {
+  const response = await apiClient.get<{ students: TeacherStudentSummary[] }>(
+    "/teacher/students"
+  );
+  return response.data.students;
+}
+
+export async function fetchTeacherStudentAnalytics(
+  studentId: string
+): Promise<TeacherStudentAnalytics> {
+  const response = await apiClient.get<TeacherStudentAnalytics>(
+    `/teacher/students/${studentId}/analytics`
+  );
+  return response.data;
+}
+
+export async function fetchTeacherConcepts(): Promise<TeacherConceptAnalytics> {
+  const response = await apiClient.get<TeacherConceptAnalytics>(
+    "/teacher/concepts"
+  );
   return response.data;
 }

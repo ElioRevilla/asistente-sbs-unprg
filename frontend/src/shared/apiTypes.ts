@@ -110,3 +110,64 @@ export type TeacherOverview = {
   explain_answers: number;
   example_cases_answered: number;
 };
+
+export type TeacherStudentSummary = {
+  student_id: string;
+  conversations: number;
+  completed_simulations: number;
+  average_simulation_score: number | null;
+  example_attempts: number;
+  last_activity: string | null;
+};
+
+export type TeacherStudentsResponse = {
+  students: TeacherStudentSummary[];
+};
+
+export type StudentConceptMastery = {
+  concept: string;
+  mastery_score: number;
+  attempts: number;
+  last_answer_correct: boolean | null;
+  updated_at: string | null;
+};
+
+export type CategoryPerformance = {
+  category: string;
+  correct: number;
+  incorrect: number;
+  accuracy: number | null;
+};
+
+export type ConfusionMetric = {
+  expected_category: string;
+  selected_category: string;
+  count: number;
+};
+
+export type TimelinePoint = {
+  period: string;
+  example_attempts: number;
+  completed_simulations: number;
+  average_simulation_score: number | null;
+};
+
+export type TeacherStudentAnalytics = {
+  student_id: string;
+  mastery_by_concept: StudentConceptMastery[];
+  category_performance: CategoryPerformance[];
+  confusions: ConfusionMetric[];
+  timeline: TimelinePoint[];
+};
+
+export type ConceptMetric = {
+  concept: string;
+  attempts: number;
+  errors: number;
+  average_mastery: number | null;
+};
+
+export type TeacherConceptAnalytics = {
+  most_consulted: ConceptMetric[];
+  most_errors: ConceptMetric[];
+};

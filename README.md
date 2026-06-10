@@ -9,7 +9,7 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 - Ingesta del PDF SBS con `pypdf`, chunking por secciones y embeddings Vertex AI.
 - Reglas de provision y FCC cargadas desde seeds curados.
 - Modo `Ejemplifica` con casos auditables, variacion narrativa opcional y practica adaptativa por estudiante.
-- Frontend React con login Firebase, historial persistido, chat unico con selector de modo y panel docente base.
+- Frontend React con login Firebase, historial persistido, chat unico con selector de modo y panel docente con analiticas de aprendizaje.
 - Evaluacion offline con dataset de 20 preguntas de validacion.
 - CI/CD con GitHub Actions hacia dos servicios de Cloud Run.
 
@@ -169,7 +169,7 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 
 - `frontend/src/features/auth`: login Firebase y estado de sesion.
 - `frontend/src/features/chat`: interfaz principal tipo chat con selector `Explicame` / `Ejemplifica`, practica adaptativa y bloqueo de casos pendientes sin validar.
-- `frontend/src/app/TeacherDashboard.tsx`: panel docente base disponible en `/teacher` para emails autorizados.
+- `frontend/src/app/TeacherDashboard.tsx`: panel docente disponible en `/teacher` para emails autorizados, con metricas generales, analiticas por estudiante y rankings por concepto.
 - `frontend/src/services`: cliente HTTP y configuracion Firebase.
 - `frontend/src/shared`: tipos compartidos y renderizado de markdown con reparacion de mojibake para historial antiguo.
 
@@ -276,6 +276,9 @@ POST /modes/simulation/{session_id}/classify
 POST /modes/simulation/{session_id}/turn
 GET  /modes/simulation/{session_id}
 GET  /teacher/overview
+GET  /teacher/students
+GET  /teacher/students/{student_id}/analytics
+GET  /teacher/concepts
 GET  /chat/conversations
 PUT  /chat/conversations/{conversation_id}
 DELETE /chat/conversations/{conversation_id}
@@ -300,9 +303,16 @@ una operacion, defiende su criterio ante Supervisor/Banco y recibe veredicto.
 La verdad de fondo del caso no se serializa al cliente hasta que la sesion queda
 en estado `CLOSED`.
 
-`/teacher/overview` expone metricas agregadas para el panel docente. Requiere
-Firebase Auth y un email incluido en `TEACHER_ALLOWED_EMAILS`; por defecto:
-`docente@sbs.test`.
+`/teacher/*` expone el panel docente. Requiere Firebase Auth y un email incluido
+en `TEACHER_ALLOWED_EMAILS`; por defecto: `docente@sbs.test`.
+
+Las analiticas docentes actuales incluyen:
+
+- resumen general de estudiantes, conversaciones, simulaciones, preguntas y casos,
+- lista de estudiantes con actividad y promedio de simulacion,
+- detalle por estudiante con dominio por concepto, aciertos/errores por categoria,
+  confusiones frecuentes y evolucion temporal,
+- rankings de conceptos mas practicados y conceptos con mas errores.
 
 ## Base de Datos y Migraciones
 
