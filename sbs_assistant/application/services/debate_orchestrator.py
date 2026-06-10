@@ -1,8 +1,11 @@
+import re
 from dataclasses import replace
 from datetime import UTC, datetime
 
 from sbs_assistant.domain.entities.agent_turn import SupervisorTurnDTO
+from sbs_assistant.domain.entities.chunk import Chunk
 from sbs_assistant.domain.entities.debate_turn import DebateTurn
+from sbs_assistant.domain.entities.operation_case import OperationCase
 from sbs_assistant.domain.entities.simulation_session import (
     SimulationSession,
     SimulationState,
@@ -15,6 +18,18 @@ from sbs_assistant.domain.value_objects.classification import Classification
 MIN_ROUNDS = 1
 MAX_ROUNDS = 3
 GROUNDING_TOP_K = 5
+GROUNDING_CANDIDATE_TOP_K = 12
+
+_CARTERA_TOPIC_BY_TYPE = {
+    "minorista": "cartera_minorista",
+    "cartera minorista": "cartera_minorista",
+    "no minorista": "cartera_no_minorista",
+    "cartera no minorista": "cartera_no_minorista",
+    "hipotecaria": "cartera_hipotecaria_vivienda",
+    "hipotecario": "cartera_hipotecaria_vivienda",
+    "hipotecaria vivienda": "cartera_hipotecaria_vivienda",
+    "hipotecario vivienda": "cartera_hipotecaria_vivienda",
+}
 
 
 class InvalidSimulationTransitionError(ValueError):
@@ -102,10 +117,7 @@ class DebateOrchestrator:
             raise InvalidSimulationTransitionError(
                 "classification is required before challenge"
             )
-        grounding_chunks = await self._retriever.retrieve(
-            self._grounding_query(session),
-            top_k=GROUNDING_TOP_K,
-        )
+        grounding_chunks = await self._retrieve_grounding_chunks(session)
         prior_objections = self._prior_objections(session)
         supervisor_turn = await self._agents.challenge(
             case=session.case,
@@ -187,6 +199,49 @@ class DebateOrchestrator:
             f"{profile_values} {articles}"
         ).strip()
 
+    async def _retrieve_grounding_chunks(
+        self,
+        session: SimulationSession,
+    ) -> list[Chunk]:
+        query = self._grounding_query(session)
+        filters = self._grounding_filters(session.case)
+        chunks = await self._retriever.retrieve(
+            query,
+            top_k=GROUNDING_CANDIDATE_TOP_K,
+            filters=filters,
+        )
+        if not chunks and filters:
+            chunks = await self._retriever.retrieve(
+                query,
+                top_k=GROUNDING_CANDIDATE_TOP_K,
+            )
+        return self._prioritize_grounding_chunks(session.case, chunks)[
+            :GROUNDING_TOP_K
+        ]
+
+    def _grounding_filters(self, case: OperationCase) -> dict[str, object] | None:
+        normalized = case.cartera_type.strip().lower()
+        topic = _CARTERA_TOPIC_BY_TYPE.get(normalized)
+        if topic is None:
+            return None
+        return {"temas": [topic]}
+
+    def _prioritize_grounding_chunks(
+        self,
+        case: OperationCase,
+        chunks: list[Chunk],
+    ) -> list[Chunk]:
+        article_tokens = _article_tokens(case.justifying_articles)
+        if not article_tokens:
+            return chunks
+        return sorted(
+            chunks,
+            key=lambda chunk: (
+                0 if _chunk_matches_articles(chunk, article_tokens) else 1,
+                chunk.id,
+            ),
+        )
+
     def _prior_objections(self, session: SimulationSession) -> list[str]:
         return [
             turn.content for turn in session.transcript if turn.role == "supervisor"
@@ -248,3 +303,23 @@ def last_supervisor_turn(session: SimulationSession) -> DebateTurn | None:
         if turn.role == "supervisor":
             return turn
     return None
+
+
+def _article_tokens(articles: list[str]) -> set[str]:
+    tokens: set[str] = set()
+    for article in articles:
+        tokens.update(re.findall(r"\b\d+(?:\.\d+)*\b", article))
+    return tokens
+
+
+def _chunk_matches_articles(chunk: Chunk, article_tokens: set[str]) -> bool:
+    candidates = [
+        chunk.numeral or "",
+        chunk.id,
+        chunk.text[:120],
+    ]
+    return any(
+        token in candidate
+        for token in article_tokens
+        for candidate in candidates
+    )

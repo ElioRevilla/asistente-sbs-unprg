@@ -34,6 +34,7 @@ class FakeDebateAgents:
         self.challenge_calls = 0
         self.pressure_calls = 0
         self.prior_objections_seen: list[list[str]] = []
+        self.grounding_seen: list[list[str | None]] = []
 
     async def present(self, case: OperationCase) -> ClienteTurnDTO:
         self.present_calls += 1
@@ -48,9 +49,10 @@ class FakeDebateAgents:
         last_defense: str | None,
         prior_objections: list[str],
     ) -> SupervisorTurnDTO:
-        del case, grounding_chunks, last_defense
+        del case, last_defense
         self.challenge_calls += 1
         self.prior_objections_seen.append(prior_objections)
+        self.grounding_seen.append([chunk.numeral for chunk in grounding_chunks])
         index = min(self.challenge_calls - 1, len(self.objections) - 1)
         return SupervisorTurnDTO(
             challenge=(
@@ -101,6 +103,7 @@ class FakeJudge:
 class FakeRetriever:
     def __init__(self) -> None:
         self.queries: list[str] = []
+        self.filters: list[dict[str, object] | None] = []
 
     async def retrieve(
         self,
@@ -108,14 +111,20 @@ class FakeRetriever:
         top_k: int = 5,
         filters: dict[str, object] | None = None,
     ) -> list[Chunk]:
-        del filters
         self.queries.append(f"{query}|top_k={top_k}")
+        self.filters.append(filters)
         return [
+            Chunk(
+                id="sec_020_2_3",
+                text="2.3 Categoria Deficiente no minorista: mas de 60 dias.",
+                numeral="2.3",
+            ),
             Chunk(
                 id="sec_027_3_3",
                 text="3.3 Categoria Deficiente: atraso de 31 a 60 dias.",
+                topics=["cartera_minorista"],
                 numeral="3.3",
-            )
+            ),
         ]
 
 
@@ -193,7 +202,25 @@ async def test_classification_generates_challenge_and_bank_pressure() -> None:
     assert agents.challenge_calls == 1
     assert agents.pressure_calls == 1
     assert "Deficiente" in retriever.queries[0]
+    assert retriever.filters[0] == {"temas": ["cartera_minorista"]}
     assert judge.calls == 0
+
+
+@pytest.mark.asyncio
+async def test_supervisor_grounding_prioritizes_justifying_articles() -> None:
+    orchestrator, agents, _, _ = make_orchestrator(objections=[True])
+    session = await orchestrator.present_case(make_session())
+
+    await orchestrator.submit_classification(
+        session,
+        Classification(
+            category=RiskCategory.CPP,
+            justification="CPP por error.",
+        ),
+    )
+
+    assert agents.challenge_calls == 1
+    assert agents.grounding_seen[0][0] == "3.3"
 
 
 @pytest.mark.asyncio
