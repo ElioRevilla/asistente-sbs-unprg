@@ -37,6 +37,10 @@ class Settings(BaseSettings):
         default=None,
         validation_alias="FIREBASE_PROJECT_ID",
     )
+    teacher_allowed_emails: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["docente@sbs.test"],
+        validation_alias="TEACHER_ALLOWED_EMAILS",
+    )
 
     gcp_project_id: str | None = Field(default=None, validation_alias="GCP_PROJECT_ID")
     gcp_region: str = Field(default="us-central1", validation_alias="GCP_REGION")
@@ -129,6 +133,20 @@ class Settings(BaseSettings):
         if isinstance(value, list):
             return value
         raise TypeError("CORS_ORIGINS must be a comma-separated string or a list")
+
+    @field_validator("teacher_allowed_emails", mode="before")
+    @classmethod
+    def parse_teacher_allowed_emails(cls, value: Any) -> list[str]:
+        """Parse teacher email allowlist from env or default settings."""
+        if value is None or value == "":
+            return ["docente@sbs.test"]
+        if isinstance(value, str):
+            return [
+                email.strip().lower() for email in value.split(",") if email.strip()
+            ]
+        if isinstance(value, list):
+            return [str(email).strip().lower() for email in value if str(email).strip()]
+        raise TypeError("TEACHER_ALLOWED_EMAILS must be a comma-separated string")
 
     @field_validator("gemini_flash_model")
     @classmethod

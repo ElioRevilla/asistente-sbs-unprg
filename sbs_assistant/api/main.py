@@ -6,6 +6,7 @@ from sbs_assistant.api.routes.example import router as example_router
 from sbs_assistant.api.routes.explain import router as explain_router
 from sbs_assistant.api.routes.health import router as health_router
 from sbs_assistant.api.routes.simulation import router as simulation_router
+from sbs_assistant.api.routes.teacher import router as teacher_router
 from sbs_assistant.config.settings import get_settings
 from sbs_assistant.infrastructure.persistence.connection import close_pool
 
@@ -29,6 +30,7 @@ def create_app() -> FastAPI:
     app.include_router(explain_router)
     app.include_router(example_router)
     app.include_router(simulation_router)
+    app.include_router(teacher_router)
 
     @app.on_event("shutdown")
     async def shutdown_database_pool() -> None:

@@ -200,6 +200,24 @@ h2 {
   white-space: nowrap;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.teacher-link-button,
+.secondary-button {
+  border: 1px solid #c8d5df;
+  color: #173f5f;
+  background: #ffffff;
+}
+
+.teacher-link-button:hover,
+.secondary-button:hover {
+  background: #eaf2f8;
+}
+
 .session-chip .logout-button {
   flex: 0 0 auto;
   min-height: 36px;
@@ -218,6 +236,106 @@ h2 {
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 18px;
   align-items: stretch;
+}
+
+.teacher-shell {
+  display: grid;
+  gap: 18px;
+  border: 1px solid rgba(120, 147, 168, 0.25);
+  border-radius: 8px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 80px rgba(16, 39, 57, 0.18);
+}
+
+.teacher-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border-bottom: 1px solid #dbe5ed;
+  padding-bottom: 16px;
+}
+
+.teacher-state {
+  border: 1px solid #dbe5ed;
+  border-radius: 8px;
+  padding: 16px;
+  color: #405363;
+  background: #f7fafc;
+  font-weight: 700;
+}
+
+.teacher-state.error {
+  color: #a23824;
+  border-color: #e3b3a8;
+  background: #fff4f1;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  display: grid;
+  gap: 10px;
+  min-height: 138px;
+  border: 1px solid #dbe5ed;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9fbfd;
+}
+
+.metric-card span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  color: #ffffff;
+  background: #1f5f8b;
+}
+
+.metric-card small,
+.teacher-band small {
+  color: #5d7282;
+  font-weight: 700;
+}
+
+.metric-card strong {
+  color: #17202a;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.teacher-band {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teacher-band div {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #dbe5ed;
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.teacher-band svg {
+  color: #1f5f8b;
+}
+
+.teacher-band span {
+  color: #173f5f;
+  font-weight: 800;
+}
+
+.teacher-band strong {
+  font-size: 1.6rem;
 }
 
 .chat-shell {
@@ -745,6 +863,16 @@ summary {
     max-width: 100%;
     border-radius: 8px;
     padding: 10px;
+  }
+
+  .topbar-actions,
+  .teacher-header {
+    display: grid;
+  }
+
+  .metrics-grid,
+  .teacher-band {
+    grid-template-columns: 1fr;
   }
 
   .session-chip .logout-button {

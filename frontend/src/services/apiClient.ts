@@ -6,7 +6,8 @@ import type {
   ExampleFeedbackResponse,
   ExampleResponse,
   ExplainResponse,
-  SimulationResponse
+  SimulationResponse,
+  TeacherOverview
 } from "../shared/apiTypes";
 import { firebaseAuth } from "./firebase";
 
@@ -131,4 +132,9 @@ export async function saveConversation(
 
 export async function deleteConversation(conversationId: string): Promise<void> {
   await apiClient.delete(`/chat/conversations/${conversationId}`);
+}
+
+export async function fetchTeacherOverview(): Promise<TeacherOverview> {
+  const response = await apiClient.get<TeacherOverview>("/teacher/overview");
+  return response.data;
 }

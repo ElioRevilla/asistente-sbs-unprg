@@ -16,6 +16,7 @@ def test_settings_defaults_are_local() -> None:
     assert settings.gemini_pro_model == "gemini-2.5-pro"
     assert settings.embeddings_model == "text-embedding-005"
     assert settings.cors_origins == []
+    assert settings.teacher_allowed_emails == ["docente@sbs.test"]
 
 
 def test_settings_accept_environment_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -24,6 +25,7 @@ def test_settings_accept_environment_overrides(monkeypatch: pytest.MonkeyPatch) 
     monkeypatch.setenv("CORS_ORIGINS", "http://localhost:5173,https://app.example")
     monkeypatch.setenv("FIREBASE_AUTH_REQUIRED", "true")
     monkeypatch.setenv("FIREBASE_PROJECT_ID", "firebase-demo")
+    monkeypatch.setenv("TEACHER_ALLOWED_EMAILS", "docente@sbs.test,profe@sbs.test")
 
     settings = Settings(_env_file=None)
 
@@ -34,6 +36,10 @@ def test_settings_accept_environment_overrides(monkeypatch: pytest.MonkeyPatch) 
     assert settings.cors_origins == [
         "http://localhost:5173",
         "https://app.example",
+    ]
+    assert settings.teacher_allowed_emails == [
+        "docente@sbs.test",
+        "profe@sbs.test",
     ]
 
 

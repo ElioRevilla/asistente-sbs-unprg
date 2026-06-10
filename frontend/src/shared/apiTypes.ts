@@ -100,3 +100,13 @@ export type ChatConversationDto = {
 export type ChatConversationListResponse = {
   conversations: ChatConversationDto[];
 };
+
+export type TeacherOverview = {
+  active_students: number;
+  total_conversations: number;
+  completed_simulations: number;
+  average_simulation_score: number | null;
+  explain_questions: number;
+  explain_answers: number;
+  example_cases_answered: number;
+};

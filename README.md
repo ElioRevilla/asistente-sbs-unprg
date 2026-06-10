@@ -4,12 +4,12 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 
 ## Estado Actual
 
-- Backend FastAPI con modos `Explicame` y `Ejemplifica`.
+- Backend FastAPI con modos `Explicame`, `Ejemplifica` y `Simulacion`.
 - RAG hibrido con PostgreSQL, pgvector, full text search en espanol y RRF.
 - Ingesta del PDF SBS con `pypdf`, chunking por secciones y embeddings Vertex AI.
 - Reglas de provision y FCC cargadas desde seeds curados.
 - Modo `Ejemplifica` con casos auditables, variacion narrativa opcional y practica adaptativa por estudiante.
-- Frontend React con login Firebase, historial persistido y chat unico con selector de modo.
+- Frontend React con login Firebase, historial persistido, chat unico con selector de modo y panel docente base.
 - Evaluacion offline con dataset de 20 preguntas de validacion.
 - CI/CD con GitHub Actions hacia dos servicios de Cloud Run.
 
@@ -39,7 +39,8 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 |   |-- src/
 |   |   |-- app/
 |   |   |   |-- App.tsx
-|   |   |   `-- Dashboard.tsx
+|   |   |   |-- Dashboard.tsx
+|   |   |   `-- TeacherDashboard.tsx
 |   |   |-- features/
 |   |   |   |-- auth/
 |   |   |   |   |-- LoginPage.tsx
@@ -70,7 +71,9 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 |   |   |   |-- chat_history.py
 |   |   |   |-- example.py
 |   |   |   |-- explain.py
-|   |   |   `-- health.py
+|   |   |   |-- health.py
+|   |   |   |-- simulation.py
+|   |   |   `-- teacher.py
 |   |   |-- schemas/
 |   |   |   |-- request_schemas.py
 |   |   |   `-- response_schemas.py
@@ -110,7 +113,9 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 |       |   |-- postgres_chunk_repo.py
 |       |   |-- postgres_example_mastery_repo.py
 |       |   |-- postgres_provision_rule_repo.py
-|       |   `-- postgres_synthetic_case_repo.py
+|       |   |-- postgres_simulation_repo.py
+|       |   |-- postgres_synthetic_case_repo.py
+|       |   `-- postgres_teacher_analytics_repo.py
 |       |-- retrieval/
 |       |   `-- postgres_hybrid_retriever.py
 |       `-- storage/
@@ -164,6 +169,7 @@ Aplicacion educativa sobre la Resolucion SBS N. 11356-2008 para estudiantes univ
 
 - `frontend/src/features/auth`: login Firebase y estado de sesion.
 - `frontend/src/features/chat`: interfaz principal tipo chat con selector `Explicame` / `Ejemplifica`, practica adaptativa y bloqueo de casos pendientes sin validar.
+- `frontend/src/app/TeacherDashboard.tsx`: panel docente base disponible en `/teacher` para emails autorizados.
 - `frontend/src/services`: cliente HTTP y configuracion Firebase.
 - `frontend/src/shared`: tipos compartidos y renderizado de markdown con reparacion de mojibake para historial antiguo.
 
@@ -255,6 +261,7 @@ Para CORS local, el `.env` del backend debe incluir:
 
 ```env
 CORS_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
+TEACHER_ALLOWED_EMAILS=docente@sbs.test
 ```
 
 ## Endpoints Implementados
@@ -268,6 +275,7 @@ POST /modes/simulation/start
 POST /modes/simulation/{session_id}/classify
 POST /modes/simulation/{session_id}/turn
 GET  /modes/simulation/{session_id}
+GET  /teacher/overview
 GET  /chat/conversations
 PUT  /chat/conversations/{conversation_id}
 DELETE /chat/conversations/{conversation_id}
@@ -288,9 +296,13 @@ En `Ejemplifica`, si `adaptive=true`, el backend:
 El frontend no genera otro caso si hay uno pendiente sin validar; primero pide seleccionar categoria y validar.
 
 `/modes/simulation/*` expone la simulacion adversarial: el alumno clasifica
-una operacion, responde objeciones del Supervisor y recibe veredicto al cierre.
+una operacion, defiende su criterio ante Supervisor/Banco y recibe veredicto.
 La verdad de fondo del caso no se serializa al cliente hasta que la sesion queda
 en estado `CLOSED`.
+
+`/teacher/overview` expone metricas agregadas para el panel docente. Requiere
+Firebase Auth y un email incluido en `TEACHER_ALLOWED_EMAILS`; por defecto:
+`docente@sbs.test`.
 
 ## Base de Datos y Migraciones
 
