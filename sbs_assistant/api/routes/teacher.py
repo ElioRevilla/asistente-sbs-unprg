@@ -1,6 +1,8 @@
+import csv
+from io import StringIO
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 
 from sbs_assistant.api.auth.firebase import FirebaseUser, get_current_user
@@ -184,6 +186,29 @@ async def teacher_concepts(
     return _concept_analytics_response(await repository.concepts())
 
 
+@router.get("/export.csv")
+async def teacher_export_csv(
+    repository: Annotated[
+        PostgresTeacherAnalyticsRepository,
+        Depends(get_teacher_analytics_repository),
+    ],
+    settings: SettingsDependency,
+    current_user: CurrentUserDependency,
+) -> Response:
+    """Return a CSV export with teacher learning analytics."""
+    _require_teacher(current_user, settings)
+    csv_content = await _build_teacher_export_csv(repository)
+    return Response(
+        content=csv_content,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                'attachment; filename="sbs_teacher_learning_analytics.csv"'
+            )
+        },
+    )
+
+
 def _require_teacher(current_user: FirebaseUser | None, settings: Settings) -> None:
     if current_user is None:
         if settings.firebase_auth_required:
@@ -301,3 +326,119 @@ def _concept_metric_response(metric: ConceptMetric) -> ConceptMetricResponse:
         errors=metric.errors,
         average_mastery=metric.average_mastery,
     )
+
+
+async def _build_teacher_export_csv(
+    repository: PostgresTeacherAnalyticsRepository,
+) -> str:
+    output = StringIO()
+    fieldnames = [
+        "section",
+        "student_id",
+        "metric",
+        "entity",
+        "value",
+        "correct",
+        "incorrect",
+        "accuracy",
+        "attempts",
+        "errors",
+        "average_mastery",
+        "period",
+        "last_activity",
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames, lineterminator="\n")
+    writer.writeheader()
+
+    students = await repository.students()
+    concepts = await repository.concepts()
+
+    for student in students:
+        writer.writerow(
+            {
+                "section": "student_summary",
+                "student_id": student.student_id,
+                "metric": "summary",
+                "entity": "student",
+                "value": student.completed_simulations,
+                "attempts": student.example_attempts,
+                "average_mastery": student.average_simulation_score,
+                "last_activity": student.last_activity,
+            }
+        )
+        analytics = await repository.student_analytics(student.student_id)
+        for mastery in analytics.mastery_by_concept:
+            writer.writerow(
+                {
+                    "section": "mastery_by_concept",
+                    "student_id": analytics.student_id,
+                    "metric": "mastery_score",
+                    "entity": mastery.concept,
+                    "value": mastery.mastery_score,
+                    "attempts": mastery.attempts,
+                    "last_activity": mastery.updated_at,
+                }
+            )
+        for category in analytics.category_performance:
+            writer.writerow(
+                {
+                    "section": "category_performance",
+                    "student_id": analytics.student_id,
+                    "metric": "accuracy",
+                    "entity": category.category,
+                    "value": category.accuracy,
+                    "correct": category.correct,
+                    "incorrect": category.incorrect,
+                }
+            )
+        for confusion in analytics.confusions:
+            writer.writerow(
+                {
+                    "section": "category_confusion",
+                    "student_id": analytics.student_id,
+                    "metric": "confusion_count",
+                    "entity": (
+                        f"{confusion.expected_category}"
+                        f"->{confusion.selected_category}"
+                    ),
+                    "value": confusion.count,
+                }
+            )
+        for point in analytics.timeline:
+            writer.writerow(
+                {
+                    "section": "timeline",
+                    "student_id": analytics.student_id,
+                    "metric": "activity",
+                    "entity": "daily_activity",
+                    "value": point.average_simulation_score,
+                    "attempts": point.example_attempts,
+                    "correct": point.completed_simulations,
+                    "period": point.period,
+                }
+            )
+
+    for metric in concepts.most_consulted:
+        writer.writerow(
+            {
+                "section": "concept_most_consulted",
+                "metric": "attempts",
+                "entity": metric.concept,
+                "value": metric.attempts,
+                "errors": metric.errors,
+                "average_mastery": metric.average_mastery,
+            }
+        )
+    for metric in concepts.most_errors:
+        writer.writerow(
+            {
+                "section": "concept_most_errors",
+                "metric": "errors",
+                "entity": metric.concept,
+                "value": metric.errors,
+                "attempts": metric.attempts,
+                "average_mastery": metric.average_mastery,
+            }
+        )
+
+    return output.getvalue()

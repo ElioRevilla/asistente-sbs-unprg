@@ -279,6 +279,7 @@ GET  /teacher/overview
 GET  /teacher/students
 GET  /teacher/students/{student_id}/analytics
 GET  /teacher/concepts
+GET  /teacher/export.csv
 GET  /chat/conversations
 PUT  /chat/conversations/{conversation_id}
 DELETE /chat/conversations/{conversation_id}
@@ -313,6 +314,7 @@ Las analiticas docentes actuales incluyen:
 - detalle por estudiante con dominio por concepto, aciertos/errores por categoria,
   confusiones frecuentes y evolucion temporal,
 - rankings de conceptos mas practicados y conceptos con mas errores.
+- exportacion CSV consolidada para analisis del docente o del paper.
 
 ## Base de Datos y Migraciones
 

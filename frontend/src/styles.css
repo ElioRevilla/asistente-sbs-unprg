@@ -257,6 +257,13 @@ h2 {
   padding-bottom: 16px;
 }
 
+.teacher-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .teacher-state {
   border: 1px solid #dbe5ed;
   border-radius: 8px;
@@ -1066,7 +1073,8 @@ summary {
   }
 
   .topbar-actions,
-  .teacher-header {
+  .teacher-header,
+  .teacher-header-actions {
     display: grid;
   }
 

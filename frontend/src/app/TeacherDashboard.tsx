@@ -6,11 +6,13 @@ import {
   BarChart3,
   BookOpen,
   ClipboardCheck,
+  Download,
   MessageSquare,
   Users
 } from "lucide-react";
 
 import {
+  downloadTeacherAnalyticsCsv,
   fetchTeacherConcepts,
   fetchTeacherOverview,
   fetchTeacherStudentAnalytics,
@@ -30,6 +32,7 @@ type TeacherDashboardProps = {
 
 export function TeacherDashboard({ onBack }: TeacherDashboardProps) {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
 
   const overviewQuery = useQuery({
     queryKey: ["teacher-overview"],
@@ -75,6 +78,23 @@ export function TeacherDashboard({ onBack }: TeacherDashboardProps) {
       ? "Sin datos"
       : `${Math.round(overview.average_simulation_score * 100)}%`;
 
+  async function handleCsvDownload() {
+    setIsDownloadingCsv(true);
+    try {
+      const blob = await downloadTeacherAnalyticsCsv();
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = "sbs_teacher_learning_analytics.csv";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } finally {
+      setIsDownloadingCsv(false);
+    }
+  }
+
   return (
     <section className="teacher-shell">
       <div className="teacher-header">
@@ -82,10 +102,21 @@ export function TeacherDashboard({ onBack }: TeacherDashboardProps) {
           <p className="eyebrow">Panel docente</p>
           <h2>Analíticas de aprendizaje</h2>
         </div>
-        <button className="secondary-button" type="button" onClick={onBack}>
-          <ArrowLeft aria-hidden="true" size={18} />
-          Volver al asistente
-        </button>
+        <div className="teacher-header-actions">
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleCsvDownload}
+            disabled={isDownloadingCsv}
+          >
+            <Download aria-hidden="true" size={18} />
+            {isDownloadingCsv ? "Descargando..." : "Descargar CSV"}
+          </button>
+          <button className="secondary-button" type="button" onClick={onBack}>
+            <ArrowLeft aria-hidden="true" size={18} />
+            Volver al asistente
+          </button>
+        </div>
       </div>
 
       {isLoading ? (

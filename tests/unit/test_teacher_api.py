@@ -201,3 +201,26 @@ def test_teacher_concepts_returns_rankings() -> None:
     assert response.status_code == 200
     assert payload["most_consulted"][0]["attempts"] == 8
     assert payload["most_errors"][0]["errors"] == 3
+
+
+def test_teacher_export_csv_returns_downloadable_analytics() -> None:
+    app.dependency_overrides[get_teacher_analytics_repository] = (
+        lambda: FakeTeacherAnalyticsRepository()
+    )
+    app.dependency_overrides[get_current_user] = lambda: FirebaseUser(
+        uid="teacher-1",
+        email="docente@sbs.test",
+        name="Docente",
+    )
+    client = TestClient(app)
+
+    response = client.get("/teacher/export.csv")
+
+    app.dependency_overrides.clear()
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "attachment" in response.headers["content-disposition"]
+    assert "section,student_id,metric" in response.text
+    assert "student_summary,student-1,summary" in response.text
+    assert "mastery_by_concept,student-1,mastery_score" in response.text
+    assert "concept_most_errors,,errors,categoria_deficiente_minorista" in response.text

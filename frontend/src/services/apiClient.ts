@@ -164,3 +164,10 @@ export async function fetchTeacherConcepts(): Promise<TeacherConceptAnalytics> {
   );
   return response.data;
 }
+
+export async function downloadTeacherAnalyticsCsv(): Promise<Blob> {
+  const response = await apiClient.get<Blob>("/teacher/export.csv", {
+    responseType: "blob"
+  });
+  return response.data;
+}
