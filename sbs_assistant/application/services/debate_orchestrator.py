@@ -215,9 +215,7 @@ class DebateOrchestrator:
                 query,
                 top_k=GROUNDING_CANDIDATE_TOP_K,
             )
-        return self._prioritize_grounding_chunks(session.case, chunks)[
-            :GROUNDING_TOP_K
-        ]
+        return self._prioritize_grounding_chunks(session.case, chunks)[:GROUNDING_TOP_K]
 
     def _grounding_filters(self, case: OperationCase) -> dict[str, object] | None:
         normalized = case.cartera_type.strip().lower()
@@ -319,7 +317,5 @@ def _chunk_matches_articles(chunk: Chunk, article_tokens: set[str]) -> bool:
         chunk.text[:120],
     ]
     return any(
-        token in candidate
-        for token in article_tokens
-        for candidate in candidates
+        token in candidate for token in article_tokens for candidate in candidates
     )
