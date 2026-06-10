@@ -376,6 +376,23 @@ h2 {
   color: #5d7282;
 }
 
+.student-selector {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 280px);
+  color: #405363;
+  font-weight: 700;
+}
+
+.student-selector span {
+  font-size: 0.82rem;
+}
+
+.student-selector select {
+  min-height: 40px;
+  padding: 8px 10px;
+}
+
 .teacher-empty {
   margin: 0;
   font-weight: 700;
@@ -1050,6 +1067,10 @@ summary {
 
   .topbar-actions,
   .teacher-header {
+    display: grid;
+  }
+
+  .teacher-panel-header {
     display: grid;
   }
 

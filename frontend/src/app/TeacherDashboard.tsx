@@ -192,8 +192,25 @@ function StudentList({ students, selectedStudentId, onSelect }: StudentListProps
   return (
     <section className="teacher-panel">
       <div className="teacher-panel-header">
-        <h3>Estudiantes</h3>
-        <small>{students.length} registrados</small>
+        <div>
+          <h3>Estudiantes</h3>
+          <small>{students.length} registrados</small>
+        </div>
+        {students.length > 0 ? (
+          <label className="student-selector">
+            <span>Seleccionar estudiante</span>
+            <select
+              value={selectedStudentId ?? ""}
+              onChange={(event) => onSelect(event.target.value)}
+            >
+              {students.map((student) => (
+                <option key={student.student_id} value={student.student_id}>
+                  {shortStudentId(student.student_id)}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </div>
       {students.length === 0 ? (
         <p className="teacher-empty">Aún no hay actividad estudiantil.</p>
