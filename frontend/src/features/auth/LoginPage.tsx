@@ -1,5 +1,14 @@
 import { FormEvent, useState } from "react";
-import { BarChart3, BookOpenCheck, GraduationCap, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpenCheck,
+  Eye,
+  GitBranch,
+  Lock,
+  Mail,
+  MessageSquareQuote,
+  Swords
+} from "lucide-react";
 
 import { useAuthStore } from "./authStore";
 
@@ -18,55 +27,58 @@ export function LoginPage() {
   }
 
   return (
-    <main className="login-shell">
-      <section className="login-hero">
-        <div className="brand-lockup">
-          <span className="brand-icon">
-            <BookOpenCheck aria-hidden="true" size={28} />
-          </span>
-          <div>
-            <p className="eyebrow">Asistente educativo SBS</p>
-            <h1>UNPRG</h1>
-          </div>
+    <main className="login-shell sbs-dark-login">
+      <nav className="login-navbar" aria-label="Navegación institucional">
+        <div className="login-brand">
+          <BookOpenCheck aria-hidden="true" size={18} />
+          <strong>SBS · UNPRG</strong>
         </div>
+        <div className="login-navlinks">
+          <span>Metodología</span>
+          <span>Normativa</span>
+          <strong>RES. 11356-2008</strong>
+        </div>
+      </nav>
 
+      <section className="login-hero">
         <div className="login-hero-copy">
-          <p className="eyebrow">Resolución SBS N. 11356-2008</p>
-          <h2>
-            Aprende clasificación crediticia SBS con simulaciones, casos y
-            retroalimentación normativa.
-          </h2>
+          <h1>
+            Aprende clasificación crediticia SBS con{" "}
+            <span>simulaciones, casos y retroalimentación normativa.</span>
+          </h1>
           <p>
-            Una plataforma académica para practicar criterios regulatorios,
-            defender decisiones y revisar evidencia de aprendizaje.
+            Practica como analista, compara criterios regulatorios y revisa
+            evidencia de aprendizaje con métricas para docentes.
           </p>
         </div>
 
-        <div className="login-feature-list">
+        <div className="login-pill-row">
           <span>
-            <ShieldCheck aria-hidden="true" size={20} />
-            Respuestas con citas normativas
+            <Swords aria-hidden="true" size={14} />
+            Debate
           </span>
           <span>
-            <GraduationCap aria-hidden="true" size={20} />
-            Casos adaptativos para estudiantes
+            <MessageSquareQuote aria-hidden="true" size={14} />
+            Citas
           </span>
           <span>
-            <BarChart3 aria-hidden="true" size={20} />
-            Analíticas para docentes
+            <GitBranch aria-hidden="true" size={14} />
+            Evidencia
           </span>
         </div>
       </section>
 
       <section className="login-panel">
         <div className="login-panel-header">
-          <p className="eyebrow">Acceso institucional</p>
-          <h2>Ingresa a tu cuenta</h2>
+          <h2>Acceso institucional</h2>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label>
-            Correo
+            <span>
+              <Mail aria-hidden="true" size={16} />
+              Correo
+            </span>
             <input
               autoComplete="username"
               type="email"
@@ -75,24 +87,28 @@ export function LoginPage() {
             />
           </label>
           <label>
-            Contraseña
-            <input
-              autoComplete="current-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
+            <span>
+              <Lock aria-hidden="true" size={16} />
+              Contraseña
+            </span>
+            <div className="password-field">
+              <input
+                autoComplete="current-password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+              <Eye aria-hidden="true" size={16} />
+            </div>
           </label>
           {authError ? <p className="form-error">{authError}</p> : null}
           <button disabled={isSubmitting} type="submit">
             {isSubmitting ? "Ingresando..." : "Ingresar"}
+            <ArrowRight aria-hidden="true" size={16} />
           </button>
         </form>
 
-        <p className="login-hint">
-          Usa el usuario asignado por el equipo del proyecto. El acceso docente
-          se habilita solo para correos autorizados.
-        </p>
+        <p className="login-hint">Solo correos autorizados</p>
       </section>
     </main>
   );
