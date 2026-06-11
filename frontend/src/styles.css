@@ -269,26 +269,38 @@ h2 {
 }
 
 .login-form label {
-  display: grid;
-  gap: 8px;
+  display: block;
   color: var(--text-secondary);
   font-size: 0.88rem;
   font-weight: 600;
 }
 
-.login-form label > span {
-  display: none;
-}
-
 .login-form input {
   min-height: 44px;
   border-color: var(--border-default);
+  padding-left: 46px;
   color: var(--text-bright);
   background: var(--bg-input);
 }
 
 .login-form input::placeholder {
   color: var(--text-muted);
+}
+
+.login-field {
+  position: relative;
+}
+
+.field-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .login-form button {
@@ -308,15 +320,26 @@ h2 {
 }
 
 .password-field input {
-  padding-right: 40px;
+  padding-right: 48px;
 }
 
-.password-field svg {
+.password-toggle {
   position: absolute;
   top: 50%;
-  right: 13px;
+  right: 10px;
+  width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 0;
   color: var(--text-muted);
+  background: transparent;
   transform: translateY(-50%);
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: var(--blue-soft);
+  background: rgba(133, 183, 235, 0.08);
 }
 
 .login-hint,

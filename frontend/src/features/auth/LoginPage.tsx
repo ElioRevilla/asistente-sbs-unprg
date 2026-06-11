@@ -17,6 +17,7 @@ export function LoginPage() {
   const authError = useAuthStore((state) => state.error);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -74,32 +75,41 @@ export function LoginPage() {
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <label>
-            <span>
-              <Mail aria-hidden="true" size={16} />
-              Correo
+          <label className="login-field">
+            <span className="field-icon">
+              <Mail aria-hidden="true" size={18} />
             </span>
             <input
+              aria-label="Correo"
               autoComplete="username"
+              placeholder="Correo"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
             />
           </label>
-          <label>
-            <span>
-              <Lock aria-hidden="true" size={16} />
-              Contraseña
+          <label className="login-field password-field">
+            <span className="field-icon">
+              <Lock aria-hidden="true" size={18} />
             </span>
-            <div className="password-field">
-              <input
-                autoComplete="current-password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              <Eye aria-hidden="true" size={16} />
-            </div>
+            <input
+              aria-label="Contraseña"
+              autoComplete="current-password"
+              placeholder="Contraseña"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <button
+              aria-label={
+                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
+              className="password-toggle"
+              type="button"
+              onClick={() => setShowPassword((current) => !current)}
+            >
+              <Eye aria-hidden="true" size={18} />
+            </button>
           </label>
           {authError ? <p className="form-error">{authError}</p> : null}
           <button disabled={isSubmitting} type="submit">
