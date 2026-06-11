@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { BookOpenCheck } from "lucide-react";
+import { BarChart3, BookOpenCheck, GraduationCap, ShieldCheck } from "lucide-react";
 
 import { useAuthStore } from "./authStore";
 
@@ -19,7 +19,7 @@ export function LoginPage() {
 
   return (
     <main className="login-shell">
-      <section className="login-panel">
+      <section className="login-hero">
         <div className="brand-lockup">
           <span className="brand-icon">
             <BookOpenCheck aria-hidden="true" size={28} />
@@ -28,6 +28,40 @@ export function LoginPage() {
             <p className="eyebrow">Asistente educativo SBS</p>
             <h1>UNPRG</h1>
           </div>
+        </div>
+
+        <div className="login-hero-copy">
+          <p className="eyebrow">Resolución SBS N. 11356-2008</p>
+          <h2>
+            Aprende clasificación crediticia SBS con simulaciones, casos y
+            retroalimentación normativa.
+          </h2>
+          <p>
+            Una plataforma académica para practicar criterios regulatorios,
+            defender decisiones y revisar evidencia de aprendizaje.
+          </p>
+        </div>
+
+        <div className="login-feature-list">
+          <span>
+            <ShieldCheck aria-hidden="true" size={20} />
+            Respuestas con citas normativas
+          </span>
+          <span>
+            <GraduationCap aria-hidden="true" size={20} />
+            Casos adaptativos para estudiantes
+          </span>
+          <span>
+            <BarChart3 aria-hidden="true" size={20} />
+            Analíticas para docentes
+          </span>
+        </div>
+      </section>
+
+      <section className="login-panel">
+        <div className="login-panel-header">
+          <p className="eyebrow">Acceso institucional</p>
+          <h2>Ingresa a tu cuenta</h2>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
@@ -56,8 +90,8 @@ export function LoginPage() {
         </form>
 
         <p className="login-hint">
-          Usa un usuario creado en Firebase Authentication con proveedor
-          email/password.
+          Usa el usuario asignado por el equipo del proyecto. El acceso docente
+          se habilita solo para correos autorizados.
         </p>
       </section>
     </main>
