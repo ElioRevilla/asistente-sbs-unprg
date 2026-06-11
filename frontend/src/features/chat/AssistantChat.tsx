@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+﻿import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Bot,
   CheckCircle2,
@@ -91,7 +91,7 @@ const starterPrompts: Record<ChatMode, string> = {
   explicame: "¿En qué casos un deudor se clasifica en categoría Dudoso?",
   ejemplifica: "Genera un caso de un deudor de microempresa en categoría Deficiente."
   ,
-  simulacion: "Inicia una simulacion adversarial de microempresa Deficiente."
+  simulacion: "Inicia una simulación adversarial de microempresa Deficiente."
 };
 
 function createWelcomeMessage(): AssistantTextMessage {
@@ -521,7 +521,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
     if (mode === "simulacion" && hasOpenSimulation) {
       appendAssistant({
         kind: "text",
-        text: "Primero cierra la simulacion adversarial actual: clasifica, defiende tu criterio y espera el veredicto del juez.",
+        text: "Primero cierra la simulación adversarial actual: clasifica, defiende tu criterio y espera el veredicto del juez.",
         citations: []
       });
       return;
@@ -553,7 +553,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
               type="button"
               onClick={() => handleModeChange("simulacion")}
             >
-              Simulacion
+              Simulación
             </button>
           </div>
 
@@ -616,7 +616,7 @@ export function AssistantChat({ userKey }: { userKey: string }) {
                 ? "Pregunta algo sobre el reglamento..."
                 : mode === "ejemplifica"
                   ? "Pide un caso para practicar..."
-                  : "Pide una simulacion adversarial..."
+                  : "Pide una simulación adversarial..."
             }
           />
           <button disabled={sendMessage.isPending || !message.trim()} type="submit">
@@ -867,7 +867,7 @@ function SimulationAnswer({
   return (
     <div className="simulation-message">
       <div className="simulation-header">
-        <span>Simulacion adversarial</span>
+        <span>Simulación adversarial</span>
         <strong>{simulation.state}</strong>
       </div>
 
@@ -903,7 +903,7 @@ function SimulationAnswer({
       {canClassify ? (
         <div className="simulation-form">
           <label>
-            Categoria que defenderas
+            Categoría que defenderás
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value)}
@@ -917,12 +917,12 @@ function SimulationAnswer({
             </select>
           </label>
           <label>
-            Justificacion inicial
+            Justificación inicial
             <textarea
               rows={3}
               value={justification}
               onChange={(event) => setJustification(event.target.value)}
-              placeholder="Sustenta tu criterio con dias de atraso, tipo de cartera o articulo aplicable..."
+              placeholder="Sustenta tu criterio con días de atraso, tipo de cartera o artículo aplicable..."
             />
           </label>
           <button
@@ -944,7 +944,7 @@ function SimulationAnswer({
               rows={3}
               value={defense}
               onChange={(event) => setDefense(event.target.value)}
-              placeholder="Responde la objecion, corrige si hace falta y cita el criterio normativo..."
+              placeholder="Responde la objeción, corrige si hace falta y cita el criterio normativo..."
             />
           </label>
           <button
@@ -966,7 +966,7 @@ function SimulationAnswer({
           <strong>Veredicto del juez</strong>
           <p>{simulation.verdict.feedback}</p>
           <div>
-            <span>Categoria final: {simulation.verdict.final_category}</span>
+            <span>Categoría final: {simulation.verdict.final_category}</span>
             <span>Resultado: {formatPercent(simulation.verdict.overall)}</span>
           </div>
           {simulation.case.ground_truth ? (
@@ -986,7 +986,7 @@ const riskCategoryOptions = [
   "CPP",
   "Deficiente",
   "Dudoso",
-  "Perdida"
+  "Pérdida"
 ];
 
 function roleLabel(role: string): string {
@@ -1008,7 +1008,7 @@ function modeLabel(mode: ChatMode): string {
   if (mode === "ejemplifica") {
     return "Ejemplifica";
   }
-  return "Simulacion";
+  return "Simulación";
 }
 
 function formatLabel(value: string): string {
@@ -1050,3 +1050,4 @@ function fromDto(conversation: ChatConversationDto): Conversation {
     updatedAt: conversation.updated_at
   };
 }
+

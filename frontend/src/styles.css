@@ -1348,3 +1348,330 @@ summary {
     grid-template-columns: 1fr;
   }
 }
+
+/* SBS Dark application identity */
+body {
+  color: var(--text-bright);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(29, 75, 119, 0.22), transparent 34%),
+    radial-gradient(circle at 80% 12%, rgba(93, 202, 165, 0.12), transparent 28%),
+    var(--bg-base);
+}
+
+button {
+  color: var(--accent-text);
+  background: var(--accent);
+  font-weight: 800;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+input,
+select,
+textarea {
+  border-color: var(--border-default);
+  color: var(--text-bright);
+  background: var(--bg-input);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.app-shell {
+  width: min(1560px, 100%);
+  min-height: 100vh;
+  padding: 22px clamp(18px, 3vw, 40px) 34px;
+}
+
+.loading-shell {
+  color: var(--blue-soft);
+  background: var(--bg-base);
+}
+
+.topbar {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 18px;
+}
+
+.topbar h1 {
+  color: var(--text-primary);
+  font-size: clamp(2rem, 4vw, 3.35rem);
+}
+
+.eyebrow {
+  color: var(--blue-soft);
+  letter-spacing: 0.04em;
+}
+
+.session-chip {
+  border-color: var(--border-default);
+  background: rgba(10, 22, 38, 0.92);
+}
+
+.session-email {
+  color: var(--text-primary);
+}
+
+.teacher-link-button,
+.secondary-button {
+  border-color: var(--border-default);
+  color: var(--blue-soft);
+  background: rgba(14, 31, 53, 0.72);
+}
+
+.teacher-link-button:hover,
+.secondary-button:hover {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.session-chip .logout-button,
+.icon-button {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.assistant-workspace {
+  margin-top: 22px;
+}
+
+.login-panel,
+.chat-shell,
+.history-panel,
+.teacher-shell,
+.teacher-panel,
+.teacher-subpanel,
+.metric-card,
+.teacher-band div,
+.case-card,
+.feedback,
+.bubble,
+.simulation-turn,
+.simulation-verdict,
+.teacher-state {
+  border-color: var(--border-default);
+  color: var(--text-bright);
+  background: rgba(10, 22, 38, 0.92);
+  box-shadow: 0 22px 72px rgba(0, 0, 0, 0.28);
+}
+
+.chat-shell,
+.history-panel,
+.teacher-shell {
+  background:
+    linear-gradient(180deg, rgba(10, 22, 38, 0.98), rgba(5, 13, 26, 0.96)),
+    var(--bg-surface);
+}
+
+.chat-toolbar,
+.history-header,
+.teacher-header,
+.composer,
+.simulation-header,
+.simulation-form,
+details {
+  border-color: var(--border-subtle);
+}
+
+.history-header h2,
+.teacher-header h2,
+.teacher-panel-header h3,
+.teacher-subpanel h4,
+.teacher-ranking-list h4,
+.metric-card strong,
+.teacher-band strong,
+.teacher-band span,
+.teacher-ranking-row span,
+.mastery-row strong,
+.confusion-row strong,
+.timeline-row strong,
+.compact-table strong,
+.simulation-header span,
+.assistant-markdown strong,
+.assistant-list li.primary strong,
+.adaptive-feedback span:first-child,
+.adaptive-note {
+  color: var(--text-primary);
+}
+
+.teacher-panel-header small,
+.teacher-empty,
+.history-empty,
+.history-item small,
+.metric-card small,
+.teacher-band small,
+.teacher-ranking-row small,
+.mastery-row small,
+.confusion-row small,
+.timeline-row small,
+.compact-table small,
+.source-note,
+.simulation-turn small,
+.simulation-verdict small,
+.login-hint,
+.inline-check,
+.adaptive-feedback,
+.simulation-form label {
+  color: var(--text-secondary);
+}
+
+.metric-card span,
+.teacher-band svg,
+.history-icon,
+.avatar {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.chat-row.user .avatar {
+  color: var(--text-primary);
+  background: var(--border-default);
+}
+
+.mode-tabs {
+  border-color: var(--border-default);
+  background: var(--bg-input);
+}
+
+.mode-tabs button {
+  color: var(--text-secondary);
+}
+
+.mode-tabs button.active {
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.history-item {
+  border-color: transparent;
+  background: rgba(14, 31, 53, 0.72);
+}
+
+.history-item.active {
+  border-color: var(--accent);
+  background: rgba(93, 202, 165, 0.12);
+}
+
+.history-item > button:first-child,
+.link-table-button {
+  color: var(--text-bright);
+}
+
+.history-delete {
+  color: var(--text-secondary);
+}
+
+.history-delete:hover {
+  color: #ffb4a6;
+  background: rgba(162, 56, 36, 0.16);
+}
+
+.bubble {
+  background: rgba(14, 31, 53, 0.76);
+}
+
+.chat-row.user .bubble {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.assistant-list li::before {
+  color: var(--accent);
+}
+
+.assistant-list li.secondary {
+  color: var(--text-bright);
+}
+
+.assistant-list li.secondary::before {
+  color: var(--blue-soft);
+}
+
+.case-card,
+.teacher-state,
+.student-detail-panel {
+  background: rgba(14, 31, 53, 0.72);
+}
+
+.feedback.success,
+.simulation-turn.juez,
+.simulation-verdict {
+  border-color: rgba(93, 202, 165, 0.72);
+  background: rgba(93, 202, 165, 0.11);
+}
+
+.feedback.warning,
+.simulation-turn.supervisor {
+  border-color: rgba(133, 183, 235, 0.48);
+  background: rgba(133, 183, 235, 0.1);
+}
+
+.simulation-turn.cliente,
+.simulation-turn.banco,
+.simulation-turn.alumno {
+  border-color: var(--border-default);
+  background: rgba(14, 31, 53, 0.72);
+}
+
+.simulation-turn span,
+.simulation-verdict div,
+.simulation-header strong,
+.adaptive-feedback span:first-child {
+  color: var(--blue-soft);
+}
+
+.simulation-header strong,
+.adaptive-note {
+  background: rgba(133, 183, 235, 0.12);
+}
+
+.teacher-table th,
+.teacher-table td {
+  border-color: var(--border-subtle);
+}
+
+.teacher-table th {
+  color: var(--blue-soft);
+}
+
+.teacher-table tr.selected {
+  background: rgba(93, 202, 165, 0.1);
+}
+
+.teacher-table td:first-child small {
+  color: var(--text-secondary);
+}
+
+.mastery-bar {
+  background: rgba(133, 183, 235, 0.14);
+}
+
+.mastery-bar i {
+  background: var(--accent);
+}
+
+.teacher-ranking-row,
+.mastery-row,
+.confusion-row,
+.timeline-row,
+.compact-table div {
+  border-color: var(--border-subtle);
+}
+
+.composer {
+  background: rgba(5, 13, 26, 0.94);
+}
+
+.form-error {
+  color: #ffb4a6;
+}
+
+summary {
+  color: var(--blue-soft);
+}

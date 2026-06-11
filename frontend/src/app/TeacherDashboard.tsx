@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+﻿import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -534,3 +534,4 @@ function shortStudentId(value: string): string {
   }
   return value.length > 18 ? `${value.slice(0, 8)}...${value.slice(-6)}` : value;
 }
+
