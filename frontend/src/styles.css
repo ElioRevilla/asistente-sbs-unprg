@@ -323,21 +323,24 @@ h2 {
   padding-right: 48px;
 }
 
-.password-toggle {
+.login-form .password-toggle {
   position: absolute;
   top: 50%;
   right: 10px;
   width: 34px;
+  height: 34px;
   min-height: 34px;
   border-radius: 8px;
+  margin-top: 0;
   padding: 0;
   color: var(--text-muted);
   background: transparent;
+  font-weight: 400;
   transform: translateY(-50%);
 }
 
-.password-toggle:hover,
-.password-toggle:focus-visible {
+.login-form .password-toggle:hover,
+.login-form .password-toggle:focus-visible {
   color: var(--blue-soft);
   background: rgba(133, 183, 235, 0.08);
 }
