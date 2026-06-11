@@ -1675,3 +1675,39 @@ details {
 summary {
   color: var(--blue-soft);
 }
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 144px;
+  gap: 14px;
+  align-items: stretch;
+  padding: 18px;
+}
+
+.composer textarea {
+  min-height: 64px;
+  max-height: 64px;
+  border-radius: 10px;
+  padding: 18px 20px;
+  line-height: 1.35;
+  resize: none;
+}
+
+.composer button {
+  width: 100%;
+  min-height: 64px;
+  border-radius: 10px;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 860px) {
+  .composer {
+    grid-template-columns: 1fr;
+  }
+
+  .composer textarea {
+    max-height: 120px;
+    resize: vertical;
+  }
+}
